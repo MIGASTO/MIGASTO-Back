@@ -10,6 +10,6 @@ export class Rol {
   @Column({ length: 50 })
   nombre: string;
 
- @OneToMany(() => Usuario, u => u.rol)
+ @OneToMany(() => Usuario, users => users.rol)
 users: Usuario[];
 }

@@ -22,14 +22,14 @@ export class RolService {
 
   // Listar todos los roles
   async findAll() {
-    return this.rolRepository.find({ relations: ['usuarios'] });
+    return this.rolRepository.find({ relations: ['users'] });
   }
 
   // Buscar un rol por ID
   async findOne(id: number) {
     const rol = await this.rolRepository.findOne({
       where: { id: id },
-      relations: ['usuarios'],
+      relations: ['users'],
     });
     if (!rol) return { message: 'Rol no encontrado' };
     return rol;
