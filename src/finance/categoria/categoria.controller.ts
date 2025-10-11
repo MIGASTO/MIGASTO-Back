@@ -17,23 +17,25 @@ export class CategoriaController {
   }
 
   @Get()
-  @Roles('admin', 'user')
+  @Roles('admin', 'usuario')
   findAll() {
     return this.categoriaService.findAll();
   }
 
-  @Roles('admin', 'user')
+  @Roles('admin', 'usuario')
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.categoriaService.findOne(+id);
   }
 
   @Patch(':id')
+  @Roles('admin')
   update(@Param('id') id: string, @Body() updateCategoriaDto: UpdateCategoriaDto) {
     return this.categoriaService.update(+id, updateCategoriaDto);
   }
 
   @Delete(':id')
+  @Roles('admin')
   remove(@Param('id') id: string) {
     return this.categoriaService.remove(+id);
   }

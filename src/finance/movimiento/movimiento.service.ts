@@ -13,7 +13,15 @@ export class MovimientoService {
   ) {}
 
   async create(createMovimientoDto: CreateMovimientoDto) {
-    const movimiento = this.movimientoRepo.create(createMovimientoDto);
+    const { id_usuario, id_categoria, id_moneda, ...rest } = createMovimientoDto;
+
+    const movimiento = this.movimientoRepo.create({
+      ...rest,
+      usuario: id_usuario ? { id_usuario } : undefined,
+      categoria: id_categoria ? { id_categoria } : undefined,
+      moneda: id_moneda ? { id_moneda } : undefined,
+    });
+
     return await this.movimientoRepo.save(movimiento);
   }
 
@@ -25,22 +33,17 @@ export class MovimientoService {
       .leftJoinAndSelect('movimiento.tags', 'tags')
       .leftJoinAndSelect('tags.tag', 'tag');
 
-    if (filters.usuario) {
-      query.andWhere('movimiento.usuario.id_usuario = :usuario', {
-        usuario: filters.usuario,
-      });
+    if (filters.id_usuario) {
+      query.andWhere('usuario.id_usuario = :id_usuario', { id_usuario: filters.id_usuario });
     }
-    if (filters.tipo) {
-      query.andWhere('movimiento.tipo = :tipo', { tipo: filters.tipo });
+
+    if (filters.id_categoria) {
+      query.andWhere('categoria.id_categoria = :id_categoria', { id_categoria: filters.id_categoria });
     }
+
     if (filters.mes && filters.anio) {
       query.andWhere('MONTH(movimiento.fecha) = :mes', { mes: filters.mes });
       query.andWhere('YEAR(movimiento.fecha) = :anio', { anio: filters.anio });
-    }
-    if (filters.categoria) {
-      query.andWhere('movimiento.categoria.id_categoria = :categoria', {
-        categoria: filters.categoria,
-      });
     }
 
     return await query.getMany();
@@ -51,6 +54,7 @@ export class MovimientoService {
       where: { id_movimiento: id },
       relations: ['usuario', 'categoria', 'moneda', 'tags', 'tags.tag'],
     });
+
     if (!movimiento) throw new NotFoundException(`Movimiento ${id} no encontrado`);
     return movimiento;
   }
