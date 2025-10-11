@@ -13,8 +13,6 @@ export class Movimiento {
   @Column({ type: 'decimal', precision: 12, scale: 2 })
   monto: number;
 
-  @Column({ type: 'enum', enum: ['ingreso', 'gasto'] })
-  tipo: string;
 
   @Column({ type: 'date' })
   fecha: Date;

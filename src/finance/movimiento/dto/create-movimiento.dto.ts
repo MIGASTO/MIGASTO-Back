@@ -1,13 +1,9 @@
-import { IsNotEmpty, IsEnum, IsNumber, IsDateString, IsOptional, IsInt, IsString } from 'class-validator';
+import { IsNotEmpty, IsNumber, IsDateString, IsOptional, IsInt, IsString } from 'class-validator';
 
 export class CreateMovimientoDto {
   @IsNotEmpty()
   @IsNumber()
   monto: number;
-
-  @IsNotEmpty()
-  @IsEnum(['ingreso', 'gasto'])
-  tipo: 'ingreso' | 'gasto';
 
   @IsNotEmpty()
   @IsDateString()
