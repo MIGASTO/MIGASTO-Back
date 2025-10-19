@@ -10,9 +10,6 @@ export class Categoria {
   @Column({ length: 100 })
   nombre_categoria: string;
 
-  @Column({ type: 'enum', enum: ['ingreso', 'gasto'] })
-  tipo: string;
-
   @OneToMany(() => Movimiento, (movimiento) => movimiento.categoria)
   movimientos: Movimiento[];
 }
