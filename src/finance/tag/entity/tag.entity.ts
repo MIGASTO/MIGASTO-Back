@@ -1,15 +1,14 @@
-// tag.entity.ts
-import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
-import { MovimientoTag } from '../../movimiento-tag/entity/movimiento_tag.entity';
+import { Movimiento } from 'src/finance/movimiento/entity/movimiento.entity';
+import { Entity, PrimaryGeneratedColumn, Column, ManyToMany } from 'typeorm';
 
 @Entity('tag')
 export class Tag {
   @PrimaryGeneratedColumn()
   id_tag: number;
 
-  @Column({ length: 50 })
+  @Column({ length: 50, unique: true })
   nombre: string;
 
-  @OneToMany(() => MovimientoTag, (movTag) => movTag.tag)
-  movimientos: MovimientoTag[];
+  @ManyToMany(() => Movimiento, (movimiento) => movimiento.tags)
+  movimientos: Movimiento[];
 }

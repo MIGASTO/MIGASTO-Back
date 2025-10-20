@@ -3,10 +3,10 @@ import { TagController } from './tag.controller';
 import { TagService } from './tag.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Tag } from './entity/tag.entity';
-import { MovimientoTag } from '../movimiento-tag/entity/movimiento_tag.entity';
+import { Movimiento } from '../movimiento/entity/movimiento.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Tag, MovimientoTag])],
+  imports: [TypeOrmModule.forFeature([Tag, Movimiento])],
   controllers: [TagController],
   providers: [TagService]
 })

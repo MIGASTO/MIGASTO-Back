@@ -1,3 +1,4 @@
+import { Type } from 'class-transformer';
 import { 
   IsNotEmpty, 
   IsNumber, 
@@ -11,6 +12,7 @@ import {
 
 export class CreateMovimientoDto {
   @IsNotEmpty({ message: 'El campo "monto" es obligatorio.' })
+  @Type(() => Number)
   @IsNumber({}, { message: 'El campo "monto" debe ser un número válido.' })
   @Min(0, { message: 'El monto no puede ser negativo.' })
   monto: number;
@@ -35,4 +37,8 @@ export class CreateMovimientoDto {
   @IsOptional()
   @IsInt({ message: 'El campo "id_moneda" debe ser un número entero.' })
   id_moneda?: number;
+
+  @IsOptional()
+  @IsInt({ message: 'El campo "id_tag" debe ser un número entero.' })
+  id_tag?: number;
 }
