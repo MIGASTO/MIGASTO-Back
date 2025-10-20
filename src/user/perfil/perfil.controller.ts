@@ -1,33 +1,47 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, ParseIntPipe, ValidationPipe, Req } from '@nestjs/common';
 import { PerfilService } from './perfil.service';
 import { CreatePerfilUsuarioDto } from './dto/create-perfil-usuario.dto';
 import { UpdatePerfilUsuarioDto } from './dto/update-perfil-usuario.dto';
+import { JwtAuthGuard } from 'src/auth/jwt-auth/jwt-auth.guard';
+import { RolesGuard } from 'src/auth/jwt-auth/roles.guard';
+import { Roles } from 'src/auth/decorator/roles.decorator';
 
-
-@Controller('usuarios/:usuarioId/perfil')
+@Controller('perfiles')
+@UseGuards(JwtAuthGuard, RolesGuard)
 export class PerfilController {
   constructor(private readonly perfilService: PerfilService) {}
 
   @Post()
-  create(@Param('usuarioId') usuarioId: string, @Body() createPerfilDto: CreatePerfilUsuarioDto) {
-    return this.perfilService.create(+usuarioId, createPerfilDto);
+  @Roles('admin', 'usuario')
+  create(@Body(new ValidationPipe()) createPerfilDto: CreatePerfilUsuarioDto, @Req() req) {
+    return this.perfilService.create(createPerfilDto, req.user);
   }
 
   @Get()
-  findOne(@Param('usuarioId') usuarioId: string) {
-    return this.perfilService.findOne(+usuarioId);
+  @Roles('admin')
+  findAll() {
+    return this.perfilService.findAll();
   }
 
-  @Patch()
+  @Get(':id')
+  @Roles('admin', 'usuario')
+  findOne(@Param('id', ParseIntPipe) id: number, @Req() req) {
+    return this.perfilService.findOne(id, req.user);
+  }
+
+  @Patch(':id')
+  @Roles('admin', 'usuario')
   update(
-    @Param('usuarioId') usuarioId: string,
-    @Body() updatePerfilDto: UpdatePerfilUsuarioDto,
+    @Param('id', ParseIntPipe) id: number,
+    @Body(new ValidationPipe()) updatePerfilDto: UpdatePerfilUsuarioDto,
+    @Req() req,
   ) {
-    return this.perfilService.update(+usuarioId, updatePerfilDto);
+    return this.perfilService.update(id, updatePerfilDto, req.user);
   }
 
-  @Delete()
-  remove(@Param('usuarioId') usuarioId: string) {
-    return this.perfilService.remove(+usuarioId);
+  @Delete(':id')
+  @Roles('admin', 'usuario')
+  remove(@Param('id', ParseIntPipe) id: number, @Req() req) {
+    return this.perfilService.remove(id, req.user);
   }
 }

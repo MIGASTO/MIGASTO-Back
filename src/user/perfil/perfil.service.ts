@@ -1,72 +1,105 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, UnauthorizedException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { PerfilUsuario } from './entity/perfil_usuario.entity';
 import { Usuario } from '../usuario/entity/usuario.entity';
 import { CreatePerfilUsuarioDto } from './dto/create-perfil-usuario.dto';
 import { UpdatePerfilUsuarioDto } from './dto/update-perfil-usuario.dto';
+import { Genero } from '../genero/entity/genero.entity';
 
 @Injectable()
 export class PerfilService {
   constructor(
     @InjectRepository(PerfilUsuario)
     private readonly perfilRepository: Repository<PerfilUsuario>,
-
     @InjectRepository(Usuario)
     private readonly usuarioRepository: Repository<Usuario>,
+    @InjectRepository(Genero)
+    private readonly generoRepository: Repository<Genero>,
   ) {}
 
-  // Crear perfil para un usuario
-  async create(usuarioId: number, createPerfilDto: CreatePerfilUsuarioDto) {
-    const usuario = await this.usuarioRepository.findOne({ where: { id_usuario: usuarioId } });
-    if (!usuario) return { message: 'Usuario no encontrado' };
+  async create(createPerfilDto: CreatePerfilUsuarioDto, user: Usuario): Promise<PerfilUsuario> {
+    try {
+      const perfilExistente = await this.perfilRepository.findOne({
+        where: { usuario: { id_usuario: user.id_usuario } },
+      });
+      if (perfilExistente) {
+        throw new BadRequestException('Este usuario ya tiene un perfil.');
+      }
 
-    // Validar que el usuario no tenga ya un perfil
-    const perfilExistente = await this.perfilRepository.findOne({
-      where: { usuario: { id_usuario: usuarioId } },
-    });
-    if (perfilExistente) return { message: 'Este usuario ya tiene un perfil' };
+      const perfil = this.perfilRepository.create({
+        ...createPerfilDto,
+        usuario: user,
+      });
 
-    const perfil = this.perfilRepository.create({
-      ...createPerfilDto,
-      usuario,
-    });
+      if (createPerfilDto.id_genero) {
+        const genero = await this.generoRepository.findOne({ where: { id_genero: createPerfilDto.id_genero } });
+        if (!genero) {
+          throw new NotFoundException(`Género con ID ${createPerfilDto.id_genero} no encontrado.`);
+        }
+        perfil.genero = genero;
+      }
 
-    await this.perfilRepository.save(perfil);
-    return { message: 'Perfil creado exitosamente', data: perfil };
+      return await this.perfilRepository.save(perfil);
+    } catch (error) {
+      throw new BadRequestException(`Error al crear el perfil: ${error.message}`);
+    }
   }
 
-  // Obtener perfil por usuario
-  async findOne(usuarioId: number) {
-    const perfil = await this.perfilRepository.findOne({
-      where: { usuario: { id_usuario: usuarioId } },
-      relations: ['usuario'],
-    });
-    if (!perfil) return { message: 'Perfil no encontrado' };
-    return perfil;
+  async findAll(): Promise<PerfilUsuario[]> {
+    try {
+      return await this.perfilRepository.find({ relations: ['usuario', 'genero'] });
+    } catch (error) {
+      throw new BadRequestException(`Error al buscar los perfiles: ${error.message}`);
+    }
   }
 
-  // Actualizar perfil
-  async update(usuarioId: number, updatePerfilDto: UpdatePerfilUsuarioDto) {
-    const perfil = await this.perfilRepository.findOne({
-      where: { usuario: { id_usuario: usuarioId } },
-      relations: ['usuario'],
-    });
-    if (!perfil) return { message: 'Perfil no encontrado' };
+  async findOne(id_perfil: number, user: Usuario): Promise<PerfilUsuario> {
+    try {
+      const perfil = await this.perfilRepository.findOne({
+        where: { id_perfil },
+        relations: ['usuario', 'genero'],
+      });
 
-    Object.assign(perfil, updatePerfilDto);
-    await this.perfilRepository.save(perfil);
-    return { message: 'Perfil actualizado exitosamente', data: perfil };
+      if (!perfil) {
+        throw new NotFoundException(`Perfil con ID ${id_perfil} no encontrado.`);
+      }
+
+      if (user.rol.nombre !== 'admin' && perfil.usuario.id_usuario !== user.id_usuario) {
+        throw new UnauthorizedException('No tienes permiso para acceder a este perfil.');
+      }
+
+      return perfil;
+    } catch (error) {
+      throw new BadRequestException(`Error al buscar el perfil: ${error.message}`);
+    }
   }
 
-  // Eliminar perfil
-  async remove(usuarioId: number) {
-    const perfil = await this.perfilRepository.findOne({
-      where: { usuario: { id_usuario: usuarioId } },
-    });
-    if (!perfil) return { message: 'Perfil no encontrado' };
+  async update(id_perfil: number, updatePerfilDto: UpdatePerfilUsuarioDto, user: Usuario): Promise<PerfilUsuario> {
+    try {
+      const perfil = await this.findOne(id_perfil, user);
 
-    await this.perfilRepository.remove(perfil);
-    return { message: 'Perfil eliminado correctamente' };
+      if (updatePerfilDto.id_genero) {
+        const genero = await this.generoRepository.findOne({ where: { id_genero: updatePerfilDto.id_genero } });
+        if (!genero) {
+          throw new NotFoundException(`Género con ID ${updatePerfilDto.id_genero} no encontrado.`);
+        }
+        perfil.genero = genero;
+      }
+
+      Object.assign(perfil, updatePerfilDto);
+      return await this.perfilRepository.save(perfil);
+    } catch (error) {
+      throw new BadRequestException(`Error al actualizar el perfil: ${error.message}`);
+    }
+  }
+
+  async remove(id_perfil: number, user: Usuario): Promise<void> {
+    try {
+      const perfil = await this.findOne(id_perfil, user);
+      await this.perfilRepository.remove(perfil);
+    } catch (error) {
+      throw new BadRequestException(`Error al eliminar el perfil: ${error.message}`);
+    }
   }
 }

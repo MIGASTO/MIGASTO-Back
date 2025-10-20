@@ -1,5 +1,6 @@
 import { IsNotEmpty, IsString, IsNumber } from 'class-validator';
 
+
 export class CreateMonedaDto {
   @IsNotEmpty()
   @IsString()

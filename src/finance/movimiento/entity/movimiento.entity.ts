@@ -1,8 +1,9 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn, OneToMany } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn, ManyToMany, JoinTable } from 'typeorm';
 import { Usuario } from '../../../user/usuario/entity/usuario.entity';
 import { Categoria } from '../../categoria/entity/categoria.entity';
 import { Moneda } from '../../moneda/entity/moneda.entity';
-import { MovimientoTag } from '../../movimiento-tag/entity/movimiento_tag.entity';
+import { Tag } from 'src/finance/tag/entity/tag.entity';
+
 
 
 @Entity('movimiento')
@@ -18,21 +19,26 @@ export class Movimiento {
   fecha: Date;
 
   @Column({ length: 255, nullable: true })
-  descripcion: string;
+  descripcion?: string;
 
-  @ManyToOne(() => Usuario, (usuario) => usuario.movimientos)
+  @ManyToOne(() => Usuario, (usuario) => usuario.movimientos, { eager: false })
   @JoinColumn({ name: 'id_usuario' })
   usuario: Usuario;
 
-  @ManyToOne(() => Categoria, (categoria) => categoria.movimientos)
+  @ManyToOne(() => Categoria, (categoria) => categoria.movimientos, { eager: false })
   @JoinColumn({ name: 'id_categoria' })
   categoria: Categoria;
 
 
   @ManyToOne(() => Moneda, (moneda) => moneda.movimientos, { nullable: true })
   @JoinColumn({ name: 'id_moneda' })
-  moneda: Moneda;
+  moneda?: Moneda;
 
-  @OneToMany(() => MovimientoTag, (movTag) => movTag.movimiento)
-  tags: MovimientoTag[];
+  @ManyToMany(() => Tag, (tag) => tag.movimientos)
+  @JoinTable({
+    name: 'movimiento_tag',
+    joinColumn: { name: 'id_movimiento' },
+    inverseJoinColumn: { name: 'id_tag' },
+  })
+  tags?: Tag[];
 }

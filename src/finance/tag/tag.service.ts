@@ -13,45 +13,60 @@ export class TagService {
   ) {}
 
   async create(createTagDto: CreateTagDto): Promise<Tag> {
-  
-    const existente = await this.tagRepository.findOne({
-      where: { nombre: createTagDto.nombre },
-    });
-    if (existente)
-      throw new BadRequestException(`El tag "${createTagDto.nombre}" ya existe.`);
-
-    const tag = this.tagRepository.create(createTagDto);
-    return await this.tagRepository.save(tag);
-  }
-
-  async findAll() {
-    return await this.tagRepository.find();
-  }
-
-  async findOne(id: number) {
-    const tag = await this.tagRepository.findOne({ where: { id_tag: id } });
-    if (!tag) throw new NotFoundException(`Tag con id ${id} no encontrado`);
-    return tag;
-  }
-
-  async update(id: number, updateTagDto: UpdateTagDto): Promise<Tag> {
-    const tag = await this.findOne(id);
-
-    
-    if (updateTagDto.nombre && updateTagDto.nombre !== tag.nombre) {
-      const duplicado = await this.tagRepository.findOne({
-        where: { nombre: updateTagDto.nombre },
-      });
-      if (duplicado)
-        throw new BadRequestException(`El nombre "${updateTagDto.nombre}" ya está en uso.`);
+    try {
+      const existingTag = await this.tagRepository.findOne({ where: { nombre: createTagDto.nombre } });
+      if (existingTag) {
+        throw new BadRequestException(`El tag "${createTagDto.nombre}" ya existe.`);
+      }
+      const newTag = this.tagRepository.create(createTagDto);
+      return await this.tagRepository.save(newTag);
+    } catch (error) {
+      throw new BadRequestException(`Error al crear el tag: ${error.message}`);
     }
-
-    Object.assign(tag, updateTagDto);
-    return await this.tagRepository.save(tag);
   }
 
-  async remove(id: number) {
-    const tag = await this.findOne(id);
-    return await this.tagRepository.remove(tag);
+  async findAll(): Promise<Tag[]> {
+    try {
+      return await this.tagRepository.find();
+    } catch (error) {
+      throw new BadRequestException(`Error al buscar los tags: ${error.message}`);
+    }
+  }
+
+  async findOne(id_tag: number): Promise<Tag> {
+    try {
+      const tag = await this.tagRepository.findOne({ where: { id_tag } });
+      if (!tag) {
+        throw new NotFoundException(`Tag con ID ${id_tag} no encontrado.`);
+      }
+      return tag;
+    } catch (error) {
+      throw new BadRequestException(`Error al buscar el tag: ${error.message}`);
+    }
+  }
+
+  async update(id_tag: number, updateTagDto: UpdateTagDto): Promise<Tag> {
+    try {
+      const tag = await this.findOne(id_tag);
+      if (updateTagDto.nombre) {
+        const existingTag = await this.tagRepository.findOne({ where: { nombre: updateTagDto.nombre } });
+        if (existingTag && existingTag.id_tag !== id_tag) {
+          throw new BadRequestException(`El tag "${updateTagDto.nombre}" ya existe.`);
+        }
+      }
+      this.tagRepository.merge(tag, updateTagDto);
+      return await this.tagRepository.save(tag);
+    } catch (error) {
+      throw new BadRequestException(`Error al actualizar el tag: ${error.message}`);
+    }
+  }
+
+  async remove(id_tag: number): Promise<void> {
+    try {
+      const tag = await this.findOne(id_tag);
+      await this.tagRepository.remove(tag);
+    } catch (error) {
+      throw new BadRequestException(`Error al eliminar el tag: ${error.message}`);
+    }
   }
 }
