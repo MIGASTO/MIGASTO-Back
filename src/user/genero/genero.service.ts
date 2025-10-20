@@ -1,10 +1,9 @@
-import {Injectable, NotFoundException, BadRequestException} from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Genero } from './entity/genero.entity';
 import { CreateGeneroDto } from './dto/create-genero.dto';
 import { UpdateGeneroDto } from './dto/Update-genero.dto';
-
 
 @Injectable()
 export class GeneroService {
@@ -14,56 +13,66 @@ export class GeneroService {
   ) {}
 
   async create(createGeneroDto: CreateGeneroDto): Promise<Genero> {
-    const { nombre } = createGeneroDto;
-
-    // validar duplicados
-    const exists = await this.generoRepository.findOne({ where: { nombre } });
-    if (exists) {
-      throw new BadRequestException(`El género "${nombre}" ya existe`);
+    try {
+      const { nombre } = createGeneroDto;
+      const exists = await this.generoRepository.findOne({ where: { nombre } });
+      if (exists) {
+        throw new BadRequestException(`El género "${nombre}" ya existe.`);
+      }
+      const genero = this.generoRepository.create(createGeneroDto);
+      return await this.generoRepository.save(genero);
+    } catch (error) {
+      throw new BadRequestException(`Error al crear el género: ${error.message}`);
     }
-
-    const genero = this.generoRepository.create(createGeneroDto);
-    return await this.generoRepository.save(genero);
   }
 
   async findAll(): Promise<Genero[]> {
-    return await this.generoRepository.find({
-      relations: ['perfiles'], // opcional
-    });
+    try {
+      return await this.generoRepository.find({ relations: ['perfiles'] });
+    } catch (error) {
+      throw new BadRequestException(`Error al buscar los géneros: ${error.message}`);
+    }
   }
 
   async findOne(id: number): Promise<Genero> {
-    const genero = await this.generoRepository.findOne({
-      where: { id_genero: id },
-      relations: ['perfiles'], // opcional
-    });
-    if (!genero) {
-      throw new NotFoundException(`Género con id ${id} no encontrado`);
+    try {
+      const genero = await this.generoRepository.findOne({
+        where: { id_genero: id },
+        relations: ['perfiles'],
+      });
+      if (!genero) {
+        throw new NotFoundException(`Género con ID ${id} no encontrado.`);
+      }
+      return genero;
+    } catch (error) {
+      throw new BadRequestException(`Error al buscar el género: ${error.message}`);
     }
-    return genero;
   }
 
   async update(id: number, updateGeneroDto: UpdateGeneroDto): Promise<Genero> {
-    const genero = await this.findOne(id);
-
-    // Validar duplicados solo si se manda nombre nuevo
-    if (updateGeneroDto.nombre && updateGeneroDto.nombre !== genero.nombre) {
-      const exists = await this.generoRepository.findOne({
-        where: { nombre: updateGeneroDto.nombre },
-      });
-      if (exists) {
-        throw new BadRequestException(
-          `El género "${updateGeneroDto.nombre}" ya existe`,
-        );
+    try {
+      const genero = await this.findOne(id);
+      if (updateGeneroDto.nombre && updateGeneroDto.nombre !== genero.nombre) {
+        const exists = await this.generoRepository.findOne({
+          where: { nombre: updateGeneroDto.nombre },
+        });
+        if (exists) {
+          throw new BadRequestException(`El género "${updateGeneroDto.nombre}" ya existe.`);
+        }
       }
+      Object.assign(genero, updateGeneroDto);
+      return await this.generoRepository.save(genero);
+    } catch (error) {
+      throw new BadRequestException(`Error al actualizar el género: ${error.message}`);
     }
-
-    Object.assign(genero, updateGeneroDto);
-    return await this.generoRepository.save(genero);
   }
 
   async remove(id: number): Promise<void> {
-    const genero = await this.findOne(id);
-    await this.generoRepository.remove(genero);
+    try {
+      const genero = await this.findOne(id);
+      await this.generoRepository.remove(genero);
+    } catch (error) {
+      throw new BadRequestException(`Error al eliminar el género: ${error.message}`);
+    }
   }
 }
