@@ -13,7 +13,7 @@ export class PerfilService {
     @InjectRepository(PerfilUsuario)
     private readonly perfilRepository: Repository<PerfilUsuario>,
     @InjectRepository(Usuario)
-    private readonly usuarioRepository: Repository<Usuario>,
+    //private readonly usuarioRepository: Repository<Usuario>,
     @InjectRepository(Genero)
     private readonly generoRepository: Repository<Genero>,
   ) {}
