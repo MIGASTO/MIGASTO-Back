@@ -10,7 +10,6 @@ import { MovimientoModule } from './finance/movimiento/movimiento.module';
 import { MonedaModule } from './finance/moneda/moneda.module';
 import { PresupuestoModule } from './finance/presupuesto/presupuesto.module';
 import { TagModule } from './finance/tag/tag.module';
-import { MovimientoTagModule } from './finance/movimiento-tag/movimiento-tag.module';
 import { NotificacionModule } from './notification/notificacion/notificacion.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { GeneroModule } from './user/genero/genero.module';
@@ -30,8 +29,7 @@ import { AuthModule } from './auth/auth.module';
     MovimientoModule, 
     MonedaModule, 
     PresupuestoModule, 
-    TagModule, 
-    MovimientoTagModule, 
+    TagModule,  
     NotificacionModule,
     GeneroModule,
     AuthModule,

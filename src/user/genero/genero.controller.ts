@@ -8,26 +8,30 @@ import { Roles } from 'src/auth/decorator/roles.decorator';
 
 @Controller('genero')
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Roles('admin')
+
 export class GeneroController {
   constructor(private readonly generoService: GeneroService) {}
 
   @Post()
+  @Roles('admin')
   create(@Body(new ValidationPipe()) createGeneroDto: CreateGeneroDto) {
     return this.generoService.create(createGeneroDto);
   }
 
   @Get()
+  @Roles('admin', 'usuario')
   findAll() {
     return this.generoService.findAll();
   }
 
   @Get(':id')
+  @Roles('admin', 'usuario')
   findOne(@Param('id', ParseIntPipe) id: number) {
     return this.generoService.findOne(id);
   }
 
   @Patch(':id')
+  @Roles('admin')
   update(
     @Param('id', ParseIntPipe) id: number,
     @Body(new ValidationPipe()) updateGeneroDto: UpdateGeneroDto,
@@ -36,6 +40,7 @@ export class GeneroController {
   }
 
   @Delete(':id')
+  @Roles('admin')
   remove(@Param('id', ParseIntPipe) id: number) {
     return this.generoService.remove(id);
   }

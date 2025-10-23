@@ -19,7 +19,6 @@ export class PerfilUsuario {
   @Column({ length: 20, nullable: true })
   telefono: string;
 
-
   @OneToOne(() => Usuario, (usuario) => usuario.perfil)
   @JoinColumn({ name: 'id_usuario' })
   usuario: Usuario;
