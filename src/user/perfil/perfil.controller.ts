@@ -40,7 +40,7 @@ export class PerfilController {
   }
 
   @Delete(':id')
-  @Roles('admin', 'usuario')
+  @Roles('admin')
   remove(@Param('id', ParseIntPipe) id: number, @Req() req) {
     return this.perfilService.remove(id, req.user);
   }

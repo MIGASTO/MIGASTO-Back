@@ -1,7 +1,5 @@
 import { Body, Controller, Post, UseGuards } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { JwtAuthGuard } from './jwt-auth/jwt-auth.guard';
-import { RolesGuard } from './jwt-auth/roles.guard';
 import { LoginDto } from './dto/login.dto';
 import { CreateUsuarioDto } from 'src/user/usuario/dto/create-usuario.dto';
 
@@ -11,7 +9,6 @@ import { CreateUsuarioDto } from 'src/user/usuario/dto/create-usuario.dto';
 export class AuthController {
     constructor (private authService: AuthService){}
 
-    @UseGuards(JwtAuthGuard, RolesGuard)
     @Post('register')
     async registerUser(@Body() user: CreateUsuarioDto){
         return this.authService.registerUser(user)

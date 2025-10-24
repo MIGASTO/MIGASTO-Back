@@ -11,7 +11,7 @@ export class PerfilUsuario {
   nombre_completo: string;
 
   @Column({ nullable: true })
-  edad: number;
+  edad: string;
 
   @Column({ length: 255, nullable: true })
   foto_perfil: string;
@@ -19,7 +19,7 @@ export class PerfilUsuario {
   @Column({ length: 20, nullable: true })
   telefono: string;
 
-  @OneToOne(() => Usuario, (usuario) => usuario.perfil)
+  @OneToOne(() => Usuario, (usuario) => usuario.perfil,{ onDelete: 'CASCADE' })
   @JoinColumn({ name: 'id_usuario' })
   usuario: Usuario;
 

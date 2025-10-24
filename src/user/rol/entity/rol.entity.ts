@@ -1,4 +1,3 @@
-// rol.entity.ts
 import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
 import { Usuario } from '../../usuario/entity/usuario.entity';
 

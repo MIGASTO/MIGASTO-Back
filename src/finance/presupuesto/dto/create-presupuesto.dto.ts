@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsInt, IsNumber } from 'class-validator';
+import { IsNotEmpty, IsInt, IsNumber, IsOptional } from 'class-validator';
 
 export class CreatePresupuestoDto {
   @IsNotEmpty()
@@ -14,6 +14,7 @@ export class CreatePresupuestoDto {
   monto_maximo: number;
 
   @IsNotEmpty()
+  @IsOptional()
   @IsInt()
-  id_usuario: number;
+  id_usuario?: number;
 }

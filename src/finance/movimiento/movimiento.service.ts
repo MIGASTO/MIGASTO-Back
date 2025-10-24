@@ -165,7 +165,6 @@ export class MovimientoService {
       throw new NotFoundException(`Usuario actual con ID ${user.id_usuario} no encontrado`);
     }
 
-    // Verificar permisos
     if (currentUser.rol?.nombre !== 'admin' && movimiento.usuario?.id_usuario !== currentUser.id_usuario) {
       throw new ForbiddenException('No tienes permiso para actualizar este movimiento');
     }

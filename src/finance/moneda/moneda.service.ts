@@ -20,6 +20,9 @@ export class MonedaService {
 
   async findAll() {
     const monedas = await this.monedaRepository.find();
+    if (monedas.length === 0) {
+      throw new NotFoundException('No se encontraron monedas');
+    }
     return { message: 'Lista de monedas', data: monedas };
   }
 

@@ -4,7 +4,7 @@ import { CreateMonedaDto } from './dto/create-moneda.dto';
 import { UpdateMonedaDto } from './dto/update-moneda.dto';
 import { JwtAuthGuard } from 'src/auth/jwt-auth/jwt-auth.guard';
 import { RolesGuard } from 'src/auth/jwt-auth/roles.guard';
-import { Roles } from 'src/auth/guards/roles.decorator';
+import { Roles } from 'src/auth/decorator/roles.decorator';
 
 @Controller('monedas')
 @UseGuards(JwtAuthGuard, RolesGuard)
