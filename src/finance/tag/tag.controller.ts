@@ -12,7 +12,7 @@ export class TagController {
   constructor(private readonly tagService: TagService) {}
 
   @Post()
-  @Roles('admin')
+  @Roles('admin', 'usuario')
   create(@Body(new ValidationPipe()) createTagDto: CreateTagDto) {
     return this.tagService.create(createTagDto);
   }
@@ -30,14 +30,15 @@ export class TagController {
   }
 
   @Patch(':id')
-  @Roles('admin')
+  @Roles('admin', 'usuario')
   update(@Param('id', ParseIntPipe) id: number, @Body(new ValidationPipe()) updateTagDto: UpdateTagDto) {
     return this.tagService.update(id, updateTagDto);
   }
 
   @Delete(':id')
-  @Roles('admin')
+  @Roles('admin', 'usuario')
   remove(@Param('id', ParseIntPipe) id: number) {
     return this.tagService.remove(id);
   }
 }
+ 

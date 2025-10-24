@@ -1,28 +1,36 @@
-import { Injectable } from "@nestjs/common";
-import { ConfigService } from "@nestjs/config";
-import { PassportStrategy } from "@nestjs/passport";
-import { Strategy, ExtractJwt } from "passport-jwt";
+import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { PassportStrategy } from '@nestjs/passport';
+import { Strategy, ExtractJwt } from 'passport-jwt';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { Usuario } from 'src/user/usuario/entity/usuario.entity';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
+  constructor(
+    private readonly configService: ConfigService,
+    @InjectRepository(Usuario)
+    private readonly usuarioRepo: Repository<Usuario>,
+  ) {
+    super({
+      jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+      ignoreExpiration: false,
+      secretOrKey:
+        configService.get<string>('JWT_SECRET') || 'fallback_secret_key_123456789',
+    });
+  }
 
-    constructor(private configService: ConfigService) {
-        super({
-            // Configurar para extraer el token del header Authorization como Bearer token
-            jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
-            //Configurar para rechazar tokens expirados
-            ignoreExpiration: false,
-            // Recuperar la clave secreta desde las varibales de entorno
-            secretOrKey: configService.get<string>('JWT_SECRET') || 'fallback_secret_key_123456789'
-        })
+  async validate(payload: any) {
+    const user = await this.usuarioRepo.findOne({
+      where: { id_usuario: payload.sub },
+      relations: ['rol'],
+    });
+
+    if (!user) {
+      throw new UnauthorizedException('Usuario no encontrado o token inválido');
     }
 
-    async validate(payload: any) {
-        return {
-            id_usario: payload.sub,
-            email: payload.email,
-            rol: payload.rol,
-        };
-    }
-
+    return user;
+  }
 }

@@ -27,6 +27,9 @@ export class TagService {
 
   async findAll(): Promise<Tag[]> {
     try {
+      if ((await this.tagRepository.count()) === 0) {
+        throw new NotFoundException('No se encontraron tags');
+      }
       return await this.tagRepository.find();
     } catch (error) {
       throw new BadRequestException(`Error al buscar los tags: ${error.message}`);

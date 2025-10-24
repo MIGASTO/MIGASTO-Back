@@ -1,25 +1,32 @@
-import { CanActivate, ExecutionContext, UnauthorizedException, Injectable } from '@nestjs/common';
+import { CanActivate, ExecutionContext, UnauthorizedException, Injectable, ForbiddenException } from '@nestjs/common';
+import { ROLES_KEY } from '../decorator/roles.decorator';
 import { Reflector } from '@nestjs/core';
 
-@Injectable()   // 👈 ESTE FALTABA
+
+@Injectable() 
 export class RolesGuard implements CanActivate {
   constructor(private reflector: Reflector) {}
 
   canActivate(context: ExecutionContext): boolean {
-    const requiredRoles = this.reflector.get<string[]>('roles', context.getHandler());
-    if (!requiredRoles) {
+    const requiredRoles = this.reflector.get<string[]>(ROLES_KEY, context.getHandler());
+    if (!requiredRoles || requiredRoles.length === 0) {
       return true;
     }
 
     const { user } = context.switchToHttp().getRequest();
 
-    if (!user || !user.rol) {
+    if (!user || !user.rol ) {
+      throw new UnauthorizedException('No tienes permisos para acceder a este recurso');
+    }
+    const userRole = typeof user.rol === 'string' ? user.rol : user.rol.nombre;
+    if (!requiredRoles.includes(userRole)) {
       throw new UnauthorizedException('No tienes permisos para acceder a este recurso');
     }
 
-    if (!requiredRoles.includes(user.rol)) {
-      throw new UnauthorizedException('No tienes permisos para acceder a este recurso');
-    }
+    //if (!requiredRoles.includes(userRole)) {
+      //throw new ForbiddenException(`Acceso denegado para el rol: ${user.rol}`);
+    //}
+
     return true;
   }
 }
