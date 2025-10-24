@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException, InternalServerErrorException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Categoria, TipoCategoria } from './entity/categoria.entity';
+import { Categoria } from './entity/categoria.entity';
 import { CreateCategoriaDto } from './dto/create-categoria.dto';
 import { UpdateCategoriaDto } from './dto/update-categoria.dto';
 
@@ -12,66 +12,61 @@ export class CategoriaService {
     private readonly categoriaRepository: Repository<Categoria>,
   ) {}
 
-  async create(createCategoriaDto: CreateCategoriaDto) {
+  async create(createCategoriaDto: CreateCategoriaDto): Promise<Categoria> {
     try {
-      const existe = await this.categoriaRepository.findOne({
-        where: { tipo_categoria: createCategoriaDto.tipo_categoria },
-      });
-
-      if (existe)
-        throw new InternalServerErrorException(
-          `La categoría ${createCategoriaDto.tipo_categoria} ya existe.`,
-        );
-
       const categoria = this.categoriaRepository.create(createCategoriaDto);
-      await this.categoriaRepository.save(categoria);
-      return { message: 'Categoría creada correctamente', data: categoria };
+      return await this.categoriaRepository.save(categoria);
     } catch (error) {
       throw new InternalServerErrorException('Error al crear la categoría');
     }
   }
 
-  async findAll() {
+  async findAll(): Promise<Categoria[]> {
     try {
-      const categorias = await this.categoriaRepository.find();
-      return { message: 'Lista de categorías', data: categorias };
+      return await this.categoriaRepository.find();
     } catch (error) {
       throw new InternalServerErrorException('Error al obtener las categorías');
     }
   }
 
-  async findOne(id: number) {
+  async findOne(id: number): Promise<Categoria> {
     try {
       const categoria = await this.categoriaRepository.findOne({ where: { id_categoria: id } });
-      if (!categoria) throw new NotFoundException(`Categoría con id ${id} no encontrada`);
-      return { message: 'Categoría encontrada', data: categoria };
+      if (!categoria) {
+        throw new NotFoundException(`Categoría con ID ${id} no encontrada`);
+      }
+      return categoria;
     } catch (error) {
-      if (error instanceof NotFoundException) throw error;
-      throw new InternalServerErrorException('Error al buscar la categoría');
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
+      throw new InternalServerErrorException('Error al obtener la categoría');
     }
   }
 
-  async findByTipo(tipo: TipoCategoria) {
+  async update(id: number, updateCategoriaDto: UpdateCategoriaDto): Promise<Categoria> {
     try {
-      const categoria = await this.categoriaRepository.findOne({
-        where: { tipo_categoria: tipo },
-      });
-      if (!categoria) throw new NotFoundException(`Categoría tipo ${tipo} no encontrada`);
-      return { message: `Categoría tipo ${tipo}`, data: categoria };
+      const categoria = await this.findOne(id);
+      this.categoriaRepository.merge(categoria, updateCategoriaDto);
+      return await this.categoriaRepository.save(categoria);
     } catch (error) {
-      if (error instanceof NotFoundException) throw error;
-      throw new InternalServerErrorException('Error al filtrar categoría por tipo');
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
+      throw new InternalServerErrorException('Error al actualizar la categoría');
     }
   }
 
-  async remove(id: number) {
+  async remove(id: number): Promise<void> {
     try {
-      const categoria = await this.categoriaRepository.findOne({ where: { id_categoria: id } });
-      if (!categoria) throw new NotFoundException(`Categoría con id ${id} no encontrada`);
-      await this.categoriaRepository.remove(categoria);
-      return { message: 'Categoría eliminada correctamente' };
+      const result = await this.categoriaRepository.delete(id);
+      if (result.affected === 0) {
+        throw new NotFoundException(`Categoría con ID ${id} no encontrada`);
+      }
     } catch (error) {
-      if (error instanceof NotFoundException) throw error;
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
       throw new InternalServerErrorException('Error al eliminar la categoría');
     }
   }

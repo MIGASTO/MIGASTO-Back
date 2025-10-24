@@ -32,7 +32,7 @@ export class Movimiento {
 
   @ManyToOne(() => Moneda, (moneda) => moneda.movimientos, { nullable: true })
   @JoinColumn({ name: 'id_moneda' })
-  moneda?: Moneda;
+  moneda?: Moneda | null;
 
   @ManyToMany(() => Tag, (tag) => tag.movimientos)
   @JoinTable({

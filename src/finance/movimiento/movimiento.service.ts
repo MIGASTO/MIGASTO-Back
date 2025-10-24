@@ -1,13 +1,13 @@
-import { Injectable, NotFoundException, BadRequestException, UnauthorizedException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { Movimiento } from './entity/movimiento.entity';
-import { CreateMovimientoDto } from './dto/create-movimiento.dto';
-import { UpdateMovimientoDto } from './dto/update-movimiento.dto';
 import { Usuario } from 'src/user/usuario/entity/usuario.entity';
-import { Categoria, TipoCategoria } from '../categoria/entity/categoria.entity';
+import { Categoria } from '../categoria/entity/categoria.entity';
 import { Moneda } from '../moneda/entity/moneda.entity';
 import { Tag } from '../tag/entity/tag.entity';
+import { CreateMovimientoDto } from './dto/create-movimiento.dto';
+import { UpdateMovimientoDto } from './dto/update-movimiento.dto';
 
 @Injectable()
 export class MovimientoService {
@@ -24,147 +24,217 @@ export class MovimientoService {
     private readonly tagRepo: Repository<Tag>,
   ) {}
 
-  async create(createMovimientoDto: CreateMovimientoDto, user: Usuario): Promise<Movimiento> {
-    const { id_categoria, id_moneda, id_tag } = createMovimientoDto;
+  
+  async create(createMovimientoDto: CreateMovimientoDto, user: Usuario) {
+    const { monto, fecha, descripcion, id_categoria, id_moneda, tags, id_usuario } = createMovimientoDto;
+
+    const currentUser = await this.usuarioRepo.findOne({
+      where: { id_usuario: user.id_usuario },
+      relations: ['rol'],
+    });
+
+    if (!currentUser) {
+      throw new NotFoundException(`Usuario actual con ID ${user.id_usuario} no encontrado`);
+    }
+
+    let usuarioMovimiento: Usuario;
+
+    if (currentUser.rol && currentUser.rol.nombre === 'admin') {
+      if (id_usuario && id_usuario !== currentUser.id_usuario) {
+        const userToAssign = await this.usuarioRepo.findOne({ where: { id_usuario } });
+        if (!userToAssign) {
+          throw new NotFoundException(`Usuario con ID ${id_usuario} no encontrado para asignar el movimiento`);
+        }
+        usuarioMovimiento = userToAssign;
+      } else {
+        usuarioMovimiento = currentUser;
+      }
+    } else {
+      usuarioMovimiento = currentUser;
+    }
+
+    const categoria = await this.categoriaRepo.findOne({ where: { id_categoria } });
+    if (!categoria) {
+      throw new NotFoundException(`Categoría con ID ${id_categoria} no encontrada`);
+    }
+
+    const movimiento = this.movimientoRepo.create({
+      monto,
+      fecha,
+      descripcion,
+      usuario: usuarioMovimiento,
+      categoria,
+    });
+
+    if (id_moneda) {
+      const moneda = await this.monedaRepo.findOne({ where: { id_moneda } });
+      if (!moneda) {
+        throw new NotFoundException(`Moneda con ID ${id_moneda} no encontrada`);
+      }
+      movimiento.moneda = moneda;
+    }
+
+    if (tags && tags.length > 0) {
+      const tagsEntities = await this.tagRepo.find({ where: { id_tag: In(tags) } });
+      if (tagsEntities.length !== tags.length) {
+        throw new NotFoundException('Uno o más tags no fueron encontrados');
+      }
+      movimiento.tags = tagsEntities;
+    }
 
     try {
-      const categoria = await this.categoriaRepo.findOne({ where: { id_categoria } });
-      if (!categoria) {
-        throw new NotFoundException(`Categoría con ID ${id_categoria} no encontrada.`);
-      }
-
-      const movimiento = this.movimientoRepo.create({
-        ...createMovimientoDto,
-        usuario: user,
-        categoria,
-      });
-
-      if (id_moneda) {
-        const moneda = await this.monedaRepo.findOne({ where: { id_moneda } });
-        if (!moneda) {
-          throw new NotFoundException(`Moneda con ID ${id_moneda} no encontrada.`);
-        }
-        movimiento.moneda = moneda;
-      }
-
-      if (id_tag) {
-        const tag = await this.tagRepo.findOne({ where: { id_tag } });
-        if (!tag) {
-          throw new NotFoundException(`Tag con ID ${id_tag} no encontrado.`);
-        }
-        movimiento.tags = [tag];
-      }
-
       return await this.movimientoRepo.save(movimiento);
     } catch (error) {
       throw new BadRequestException(`Error al crear el movimiento: ${error.message}`);
     }
   }
 
-  async findAll(
-    user: Usuario,
-    tag?: string,
-    fecha?: string,
-    moneda?: string,
-    tipoCategoria?: TipoCategoria,
-  ): Promise<Movimiento[]> {
-    try {
-      const query = this.movimientoRepo.createQueryBuilder('movimiento')
-        .leftJoinAndSelect('movimiento.usuario', 'usuario')
-        .leftJoinAndSelect('movimiento.categoria', 'categoria')
-        .leftJoinAndSelect('movimiento.moneda', 'moneda')
-        .leftJoinAndSelect('movimiento.tags', 'tags');
-
-      if (user.rol.nombre !== 'admin') {
-        query.where('movimiento.id_usuario = :id_usuario', { id_usuario: user.id_usuario });
-      }
-
-      if (tag) {
-        query.andWhere('tags.nombre_tag = :tag', { tag });
-      }
-
-      if (fecha) {
-        query.andWhere('movimiento.fecha = :fecha', { fecha });
-      }
-
-      if (moneda) {
-        query.andWhere('moneda.nombre_moneda = :moneda', { moneda });
-      }
-
-      if (tipoCategoria) {
-        query.andWhere('categoria.tipo_categoria = :tipoCategoria', { tipoCategoria });
-      }
-
-      return await query.getMany();
-    } catch (error) {
-      throw new BadRequestException(`Error al buscar movimientos: ${error.message}`);
+  
+  async findAll(user: Usuario) {
+    const currentUser = await this.usuarioRepo.findOne({
+      where: { id_usuario: user.id_usuario },
+      relations: ['rol'],
+    });
+    if (!currentUser) {
+      throw new NotFoundException(`Usuario actual con ID ${user.id_usuario} no encontrado`);
     }
-  }
 
-  async findOne(id_movimiento: number, user: Usuario): Promise<Movimiento> {
-    try {
-      const movimiento = await this.movimientoRepo.findOne({
-        where: { id_movimiento },
-        relations: ['usuario', 'categoria', 'moneda', 'tags'],
+    let movimientos: Movimiento[];
+
+    if (currentUser.rol && currentUser.rol.nombre === 'admin') {
+      movimientos = await this.movimientoRepo.find({ relations: ['usuario', 'categoria', 'moneda', 'tags'] });
+    } else {
+      movimientos = await this.movimientoRepo.find({
+        where: { usuario: { id_usuario: currentUser.id_usuario } },
+        relations: ['categoria', 'moneda', 'tags'],
       });
-
-      if (!movimiento) {
-        throw new NotFoundException(`Movimiento con ID ${id_movimiento} no encontrado.`);
-      }
-
-      if (user.rol.nombre !== 'admin' && movimiento.usuario.id_usuario !== user.id_usuario) {
-        throw new UnauthorizedException('No tienes permiso para acceder a este movimiento.');
-      }
-
-      return movimiento;
-    } catch (error) {
-      throw new BadRequestException(`Error al buscar el movimiento: ${error.message}`);
     }
+
+    if (!movimientos || movimientos.length === 0) {
+      throw new NotFoundException(`No hay movimientos registrados para este usuario`);
+    }
+
+    return movimientos;
   }
 
-  async update(id_movimiento: number, updateMovimientoDto: UpdateMovimientoDto, user: Usuario): Promise<Movimiento> {
-    const { id_categoria, id_moneda, id_tag } = updateMovimientoDto;
+  
+  async findId(id: number, user: Usuario) {
+    const currentUser = await this.usuarioRepo.findOne({
+      where: { id_usuario: user.id_usuario },
+      relations: ['rol'],
+    });
 
-    try {
-      const movimiento = await this.findOne(id_movimiento, user);
+    if (!currentUser) {
+      throw new NotFoundException(`Usuario actual con ID ${user.id_usuario} no encontrado`);
+    }
 
-      if (id_categoria) {
-        const categoria = await this.categoriaRepo.findOne({ where: { id_categoria } });
-        if (!categoria) {
-          throw new NotFoundException(`Categoría con ID ${id_categoria} no encontrada.`);
-        }
-        movimiento.categoria = categoria;
-      }
+    const movimiento = await this.movimientoRepo.findOne({
+      where: { id_movimiento: id },
+      relations: ['usuario', 'categoria', 'moneda', 'tags'],
+    });
 
-      if (id_moneda) {
-        const moneda = await this.monedaRepo.findOne({ where: { id_moneda } });
-        if (!moneda) {
-          throw new NotFoundException(`Moneda con ID ${id_moneda} no encontrada.`);
-        }
+    if (!movimiento) {
+      throw new NotFoundException(`Movimiento con ID ${id} no encontrado`);
+    }
+
+    
+    if (currentUser.rol?.nombre !== 'admin' && movimiento.usuario?.id_usuario !== currentUser.id_usuario) {
+      throw new ForbiddenException('No tienes permiso para acceder a este movimiento');
+    }
+
+    return movimiento;
+  }
+
+  
+  async update(id: number, updateDto: UpdateMovimientoDto, user: Usuario) {
+    const movimiento = await this.movimientoRepo.findOne({
+      where: { id_movimiento: id },
+      relations: ['usuario', 'categoria', 'moneda', 'tags'],
+    });
+
+    if (!movimiento) {
+      throw new NotFoundException(`Movimiento con ID ${id} no encontrado`);
+    }
+
+    const currentUser = await this.usuarioRepo.findOne({
+      where: { id_usuario: user.id_usuario },
+      relations: ['rol'],
+    });
+
+    if (!currentUser) {
+      throw new NotFoundException(`Usuario actual con ID ${user.id_usuario} no encontrado`);
+    }
+
+    // Verificar permisos
+    if (currentUser.rol?.nombre !== 'admin' && movimiento.usuario?.id_usuario !== currentUser.id_usuario) {
+      throw new ForbiddenException('No tienes permiso para actualizar este movimiento');
+    }
+
+    
+    if (updateDto.monto !== undefined) movimiento.monto = updateDto.monto;
+    if (updateDto.fecha !== undefined) movimiento.fecha = updateDto.fecha;
+    if (updateDto.descripcion !== undefined) movimiento.descripcion = updateDto.descripcion;
+
+    if (updateDto.id_categoria !== undefined) {
+      const categoria = await this.categoriaRepo.findOne({ where: { id_categoria: updateDto.id_categoria } });
+      if (!categoria) throw new NotFoundException(`Categoría con ID ${updateDto.id_categoria} no encontrada`);
+      movimiento.categoria = categoria;
+    }
+
+    if (updateDto.id_moneda !== undefined) {
+      if (updateDto.id_moneda === null) {
+        movimiento.moneda = null;
+      } else {
+        const moneda = await this.monedaRepo.findOne({ where: { id_moneda: updateDto.id_moneda } });
+        if (!moneda) throw new NotFoundException(`Moneda con ID ${updateDto.id_moneda} no encontrada`);
         movimiento.moneda = moneda;
       }
+    }
 
-      if (id_tag) {
-        const tag = await this.tagRepo.findOne({ where: { id_tag } });
-        if (!tag) {
-          throw new NotFoundException(`Tag con ID ${id_tag} no encontrado.`);
+    if (updateDto.tags !== undefined) {
+      if (!updateDto.tags || updateDto.tags.length === 0) {
+        movimiento.tags = [];
+      } else {
+        const tagsEntities = await this.tagRepo.find({ where: { id_tag: In(updateDto.tags) } });
+        if (tagsEntities.length !== updateDto.tags.length) {
+          throw new NotFoundException('Uno o más tags no fueron encontrados');
         }
-        movimiento.tags = [tag];
+        movimiento.tags = tagsEntities;
       }
+    }
 
-      Object.assign(movimiento, updateMovimientoDto);
+    try {
       return await this.movimientoRepo.save(movimiento);
     } catch (error) {
       throw new BadRequestException(`Error al actualizar el movimiento: ${error.message}`);
     }
   }
 
-  async remove(id_movimiento: number, user: Usuario): Promise<void> {
-    try {
-      const movimiento = await this.findOne(id_movimiento, user);
-      await this.movimientoRepo.remove(movimiento);
-    } catch (error) {
-      throw new BadRequestException(`Error al eliminar el movimiento: ${error.message}`);
+  
+  async delete(id: number, user: Usuario) {
+    const movimiento = await this.movimientoRepo.findOne({
+      where: { id_movimiento: id },
+      relations: ['usuario'],
+    });
+
+    if (!movimiento) {
+      throw new NotFoundException(`Movimiento con ID ${id} no encontrado`);
     }
+
+    const currentUser = await this.usuarioRepo.findOne({
+      where: { id_usuario: user.id_usuario },
+      relations: ['rol'],
+    });
+
+    if (!currentUser) {
+      throw new NotFoundException(`Usuario actual con ID ${user.id_usuario} no encontrado`);
+    }
+
+    if (currentUser.rol?.nombre !== 'admin' && movimiento.usuario?.id_usuario !== currentUser.id_usuario) {
+      throw new ForbiddenException('No tienes permiso para eliminar este movimiento');
+    }
+
+    await this.movimientoRepo.remove(movimiento);
+    return { message: `Movimiento con ID ${id} eliminado correctamente` };
   }
 }

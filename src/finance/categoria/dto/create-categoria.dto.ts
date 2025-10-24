@@ -1,8 +1,8 @@
-import { IsNotEmpty, IsEnum } from 'class-validator';
-import { TipoCategoria } from '../entity/categoria.entity';
+import { IsString, IsNotEmpty, Length } from 'class-validator';
 
 export class CreateCategoriaDto {
-  @IsNotEmpty()
-  @IsEnum(TipoCategoria, { message: 'El tipo debe ser INGRESO o GASTO' })
-  tipo_categoria: TipoCategoria;
+  @IsString({ message: 'El tipo de categoría debe ser una cadena de texto' })
+  @IsNotEmpty({ message: 'El tipo de categoría no puede estar vacío' })
+  @Length(1, 20, { message: 'El tipo de categoría debe tener entre 1 y 20 caracteres' })
+  tipo_categoria: string;
 }
