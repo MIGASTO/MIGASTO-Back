@@ -8,6 +8,7 @@ import { JwtStrategy } from './strategies/jwt.strategy';
 import { PassportModule } from '@nestjs/passport';
 import { Usuario } from 'src/user/usuario/entity/usuario.entity';
 import { Rol } from 'src/user/rol/entity/rol.entity';
+import { PerfilUsuario } from 'src/user/perfil/entity/perfil_usuario.entity';
 
 
 @Module({
@@ -21,7 +22,7 @@ import { Rol } from 'src/user/rol/entity/rol.entity';
         signOptions: { expiresIn: '30m' },
       }),
     }),
-    TypeOrmModule.forFeature([Usuario, Rol])
+    TypeOrmModule.forFeature([Usuario, Rol,PerfilUsuario])
   ],
   controllers: [AuthController],
   providers: [AuthService, JwtStrategy, JwtService]

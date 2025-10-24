@@ -23,10 +23,6 @@ export class RolesGuard implements CanActivate {
       throw new UnauthorizedException('No tienes permisos para acceder a este recurso');
     }
 
-    //if (!requiredRoles.includes(userRole)) {
-      //throw new ForbiddenException(`Acceso denegado para el rol: ${user.rol}`);
-    //}
-
     return true;
   }
 }

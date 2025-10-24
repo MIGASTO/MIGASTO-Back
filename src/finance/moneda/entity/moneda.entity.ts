@@ -1,4 +1,3 @@
-// moneda.entity.ts
 import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
 import { Movimiento } from '../../movimiento/entity/movimiento.entity';
 
