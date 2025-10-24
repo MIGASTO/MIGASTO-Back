@@ -4,6 +4,7 @@ import { Repository } from 'typeorm';
 import { Categoria } from './entity/categoria.entity';
 import { CreateCategoriaDto } from './dto/create-categoria.dto';
 import { UpdateCategoriaDto } from './dto/update-categoria.dto';
+import { Usuario } from 'src/user/usuario/entity/usuario.entity';
 
 @Injectable()
 export class CategoriaService {
@@ -43,6 +44,36 @@ export class CategoriaService {
       throw new InternalServerErrorException('Error al obtener la categoría');
     }
   }
+
+
+  async findWithMovimientosByUser(id: number, user: Usuario): Promise<Categoria> {
+  const categoria = await this.categoriaRepository.findOne({
+    where: { id_categoria: id },
+    relations: ['movimientos', 'movimientos.usuario'],
+  });
+
+  if (!categoria) {
+    throw new NotFoundException(`Categoría con ID ${id} no encontrada`);
+  }
+
+  // Si el usuario no es admin, filtra sus propios movimientos
+  if (user.rol.nombre !== 'admin') {
+    categoria.movimientos = categoria.movimientos.filter(
+      (m) => m.usuario.id_usuario === user.id_usuario,
+    );
+  }
+
+  // 🔹 Validación: si no hay movimientos asociados
+  if (!categoria.movimientos || categoria.movimientos.length === 0) {
+    throw new NotFoundException(
+      `No existen movimientos asociados a la categoría con ID ${id}`,
+    );
+  }
+
+  return categoria;
+}
+
+
 
   async update(id: number, updateCategoriaDto: UpdateCategoriaDto): Promise<Categoria> {
     try {

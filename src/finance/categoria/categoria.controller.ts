@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UsePipes, ValidationPipe, ParseIntPipe, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UsePipes, ValidationPipe, ParseIntPipe, UseGuards, Request } from '@nestjs/common';
 import { CategoriaService } from './categoria.service';
 import { CreateCategoriaDto } from './dto/create-categoria.dto';
 import { UpdateCategoriaDto } from './dto/update-categoria.dto';
@@ -29,6 +29,14 @@ export class CategoriaController {
   findOne(@Param('id', ParseIntPipe) id: number) {
     return this.categoriaService.findOne(id);
   }
+
+ @Get(':id/mis-movimientos')
+@Roles('admin', 'usuario')
+findWithMovimientosByUser(@Param('id', ParseIntPipe) id: number, @Request() req) {
+  return this.categoriaService.findWithMovimientosByUser(id, req.user);
+}
+
+
 
   @Patch(':id')
   @Roles('admin')
