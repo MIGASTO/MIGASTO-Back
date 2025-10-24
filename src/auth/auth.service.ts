@@ -52,7 +52,7 @@ export class AuthService {
   }
 
   async generateToken(user: any): Promise<{ access_token: string }> {
-    const payload = { sub: user.id, email: user.email, rol: user.rol.nombre };
+    const payload = { sub: user.id_usuario, email: user.email, rol: user.rol.nombre };
     const secret = this.configService.get<string>('JWT_SECRET') || 'fallback_secret_key_123456789';
     return { access_token: this.jwtService.sign(payload, { secret }) };
   }

@@ -1,37 +1,45 @@
-import { Controller, Get, Post, Body, Param, Delete, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UsePipes, ValidationPipe, ParseIntPipe, UseGuards } from '@nestjs/common';
 import { CategoriaService } from './categoria.service';
 import { CreateCategoriaDto } from './dto/create-categoria.dto';
+import { UpdateCategoriaDto } from './dto/update-categoria.dto';
 import { JwtAuthGuard } from 'src/auth/jwt-auth/jwt-auth.guard';
 import { RolesGuard } from 'src/auth/jwt-auth/roles.guard';
-import { Roles } from 'src/auth/guards/roles.decorator';
-import { TipoCategoria } from './entity/categoria.entity';
+import { Roles } from 'src/auth/decorator/roles.decorator';
 
-@Controller('categorias')
+@Controller('categoria')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class CategoriaController {
   constructor(private readonly categoriaService: CategoriaService) {}
 
-  @Roles('admin')
   @Post()
+  @Roles('admin')
+  @UsePipes(new ValidationPipe({ whitelist: true }))
   create(@Body() createCategoriaDto: CreateCategoriaDto) {
     return this.categoriaService.create(createCategoriaDto);
   }
 
-  @Roles('admin', 'usuario')
   @Get()
+  @Roles('admin', 'usuario')
   findAll() {
     return this.categoriaService.findAll();
   }
 
+  @Get(':id')
   @Roles('admin', 'usuario')
-  @Get('tipo/:tipo')
-  findByTipo(@Param('tipo') tipo: TipoCategoria) {
-    return this.categoriaService.findByTipo(tipo);
+  findOne(@Param('id', ParseIntPipe) id: number) {
+    return this.categoriaService.findOne(id);
   }
 
+  @Patch(':id')
   @Roles('admin')
+  @UsePipes(new ValidationPipe({ whitelist: true }))
+  update(@Param('id', ParseIntPipe) id: number, @Body() updateCategoriaDto: UpdateCategoriaDto) {
+    return this.categoriaService.update(id, updateCategoriaDto);
+  }
+
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.categoriaService.remove(+id);
+  @Roles('admin')
+  remove(@Param('id', ParseIntPipe) id: number) {
+    return this.categoriaService.remove(id);
   }
 }

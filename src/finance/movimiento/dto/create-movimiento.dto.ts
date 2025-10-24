@@ -1,44 +1,32 @@
-import { Type } from 'class-transformer';
-import { 
-  IsNotEmpty, 
-  IsNumber, 
-  IsDateString, 
-  IsOptional, 
-  IsInt, 
-  IsString, 
-  Min, 
-  Length 
-} from 'class-validator';
+import { IsNotEmpty, IsNumber, IsDateString, IsString, IsOptional, IsInt, IsArray } from 'class-validator';
 
 export class CreateMovimientoDto {
-  @IsNotEmpty({ message: 'El campo "monto" es obligatorio.' })
-  @Type(() => Number)
-  @IsNumber({}, { message: 'El campo "monto" debe ser un número válido.' })
-  @Min(0, { message: 'El monto no puede ser negativo.' })
+  @IsNotEmpty({ message: 'El monto es obligatorio' })
+  @IsNumber({}, { message: 'El monto debe ser un número' })
   monto: number;
 
-  @IsNotEmpty({ message: 'El campo "fecha" es obligatorio.' })
-  @IsDateString({}, { message: 'El campo "fecha" debe tener un formato de fecha válido (YYYY-MM-DD).' })
-  fecha: string;
+  @IsNotEmpty({ message: 'La fecha es obligatoria' })
+  @IsDateString({}, { message: 'La fecha debe ser una fecha válida' })
+  fecha: Date;
 
   @IsOptional()
-  @IsString({ message: 'El campo "descripcion" debe ser una cadena de texto.' })
-  @Length(3, 200, { message: 'La descripción debe tener entre 3 y 200 caracteres.' })
+  @IsString({ message: 'La descripción debe ser un texto' })
   descripcion?: string;
 
-  @IsNotEmpty({ message: 'El campo "id_usuario" es obligatorio.' })
-  @IsInt({ message: 'El campo "id_usuario" debe ser un número entero.' })
-  id_usuario: number;
-
-  @IsNotEmpty({ message: 'El campo "id_categoria" es obligatorio.' })
-  @IsInt({ message: 'El campo "id_categoria" debe ser un número entero.' })
+  @IsNotEmpty({ message: 'La categoría es obligatoria' })
+  @IsInt({ message: 'El ID de la categoría debe ser un número entero' })
   id_categoria: number;
 
   @IsOptional()
-  @IsInt({ message: 'El campo "id_moneda" debe ser un número entero.' })
+  @IsInt({ message: 'El ID de la moneda debe ser un número entero' })
   id_moneda?: number;
 
   @IsOptional()
-  @IsInt({ message: 'El campo "id_tag" debe ser un número entero.' })
-  id_tag?: number;
+  @IsArray({ message: 'Los tags deben ser un arreglo' })
+  @IsInt({ each: true, message: 'Cada ID de tag debe ser un número entero' })
+  tags?: number[];
+
+  @IsOptional()
+  @IsInt({ message: 'El ID de usuario debe ser un número entero' })
+  id_usuario?: number;
 }
