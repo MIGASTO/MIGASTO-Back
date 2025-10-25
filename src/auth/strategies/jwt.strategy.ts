@@ -22,6 +22,8 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   }
 
   async validate(payload: any) {
+    //depuración: mostrar el payload recibido
+    //console.log('🔑 Payload del JWT recibido en backend:', payload);
     const user = await this.usuarioRepo.findOne({
       where: { id_usuario: payload.sub },
       relations: ['rol'],
