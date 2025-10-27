@@ -63,7 +63,6 @@ export class CategoriaService {
     );
   }
 
-  // 🔹 Validación: si no hay movimientos asociados
   if (!categoria.movimientos || categoria.movimientos.length === 0) {
     throw new NotFoundException(
       `No existen movimientos asociados a la categoría con ID ${id}`,

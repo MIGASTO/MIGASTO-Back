@@ -1,13 +1,15 @@
+import { Transform, Type } from 'class-transformer';
 import { IsNotEmpty, IsNumber, IsDateString, IsString, IsOptional, IsInt, IsArray } from 'class-validator';
 
 export class CreateMovimientoDto {
   @IsNotEmpty({ message: 'El monto es obligatorio' })
+  @Type(() => Number)
   @IsNumber({}, { message: 'El monto debe ser un número' })
   monto: number;
 
   @IsNotEmpty({ message: 'La fecha es obligatoria' })
   @IsDateString({}, { message: 'La fecha debe ser una fecha válida' })
-  fecha: Date;
+  fecha: string;
 
   @IsOptional()
   @IsString({ message: 'La descripción debe ser un texto' })
@@ -24,6 +26,7 @@ export class CreateMovimientoDto {
   @IsOptional()
   @IsArray({ message: 'Los tags deben ser un arreglo' })
   @IsInt({ each: true, message: 'Cada ID de tag debe ser un número entero' })
+  @Transform(({ value }) => (Array.isArray(value) ? value : [value]))
   tags?: number[];
 
   @IsOptional()
