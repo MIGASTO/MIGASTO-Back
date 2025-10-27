@@ -13,7 +13,10 @@ export class PerfilController {
 
   @Post()
   @Roles('admin', 'usuario')
-  create(@Body(new ValidationPipe()) createPerfilDto: CreatePerfilUsuarioDto, @Req() req) {
+  create(
+    @Body(new ValidationPipe()) createPerfilDto: CreatePerfilUsuarioDto,
+    @Req() req,
+  ) {
     return this.perfilService.create(createPerfilDto, req.user);
   }
 
@@ -25,7 +28,10 @@ export class PerfilController {
 
   @Get(':id')
   @Roles('admin', 'usuario')
-  findOne(@Param('id', ParseIntPipe) id: number, @Req() req) {
+  findOne(
+    @Param('id', ParseIntPipe) id: number,
+    @Req() req,
+  ) {
     return this.perfilService.findOne(id, req.user);
   }
 
@@ -40,8 +46,11 @@ export class PerfilController {
   }
 
   @Delete(':id')
-  @Roles('admin')
-  remove(@Param('id', ParseIntPipe) id: number, @Req() req) {
+  @Roles('admin', 'usuario')
+  remove(
+    @Param('id', ParseIntPipe) id: number,
+    @Req() req,
+  ) {
     return this.perfilService.remove(id, req.user);
   }
 }

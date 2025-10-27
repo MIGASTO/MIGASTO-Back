@@ -13,93 +13,98 @@ export class PerfilService {
     @InjectRepository(PerfilUsuario)
     private readonly perfilRepository: Repository<PerfilUsuario>,
     @InjectRepository(Usuario)
-    //private readonly usuarioRepository: Repository<Usuario>,
+    private readonly usuarioRepository: Repository<Usuario>,
     @InjectRepository(Genero)
     private readonly generoRepository: Repository<Genero>,
   ) {}
 
   async create(createPerfilDto: CreatePerfilUsuarioDto, user: Usuario): Promise<PerfilUsuario> {
-    try {
-      const perfilExistente = await this.perfilRepository.findOne({
-        where: { usuario: { id_usuario: user.id_usuario } },
-      });
-      if (perfilExistente) {
-        throw new BadRequestException('Este usuario ya tiene un perfil.');
-      }
-
-      const perfil = this.perfilRepository.create({
-        ...createPerfilDto,
-        usuario: user,
-      });
-
-      if (createPerfilDto.id_genero) {
-        const genero = await this.generoRepository.findOne({ where: { id_genero: createPerfilDto.id_genero } });
-        if (!genero) {
-          throw new NotFoundException(`Género con ID ${createPerfilDto.id_genero} no encontrado.`);
-        }
-        perfil.genero = genero;
-      }
-
-      return await this.perfilRepository.save(perfil);
-    } catch (error) {
-      throw new BadRequestException(`Error al crear el perfil: ${error.message}`);
+    const perfilExistente = await this.perfilRepository.findOne({
+      where: { usuario: { id_usuario: user.id_usuario } },
+    });
+    if (perfilExistente) {
+      throw new BadRequestException('Este usuario ya tiene un perfil.');
     }
+
+    const { id_genero, ...rest } = createPerfilDto;
+    const perfil = this.perfilRepository.create({
+      ...rest,
+      usuario: user,
+    });
+
+    if (id_genero) {
+      const genero = await this.generoRepository.findOne({ where: { id_genero } });
+      if (!genero) {
+        throw new NotFoundException(`Género con ID ${id_genero} no encontrado.`);
+      }
+      perfil.genero = genero;
+    }
+
+    return this.perfilRepository.save(perfil);
   }
 
   async findAll(): Promise<PerfilUsuario[]> {
-    try {
-      return await this.perfilRepository.find({ relations: ['usuario', 'genero'] });
-    } catch (error) {
-      throw new BadRequestException(`Error al buscar los perfiles: ${error.message}`);
-    }
+    return this.perfilRepository.find({ relations: ['usuario', 'genero'] });
   }
 
   async findOne(id_perfil: number, user: Usuario): Promise<PerfilUsuario> {
-    try {
-      const perfil = await this.perfilRepository.findOne({
-        where: { id_perfil },
-        relations: ['usuario', 'genero'],
-      });
+    const perfil = await this.perfilRepository.findOne({
+      where: { id_perfil },
+      relations: ['usuario', 'genero', 'usuario.rol'],
+    });
 
-      if (!perfil) {
-        throw new NotFoundException(`Perfil con ID ${id_perfil} no encontrado.`);
-      }
-
-      if (user.rol.nombre !== 'admin' && perfil.usuario.id_usuario !== user.id_usuario) {
-        throw new UnauthorizedException('No tienes permiso para acceder a este perfil.');
-      }
-
-      return perfil;
-    } catch (error) {
-      throw new BadRequestException(`Error al buscar el perfil: ${error.message}`);
+    if (!perfil) {
+      throw new NotFoundException(`Perfil con ID ${id_perfil} no encontrado.`);
     }
+
+    const isOwner = perfil.usuario.id_usuario === user.id_usuario;
+    const isAdmin = user.rol.nombre === 'admin';
+
+    // Un usuario normal solo puede ver su propio perfil.
+    // Un admin puede ver cualquier perfil.
+    if (!isOwner && !isAdmin) {
+      throw new UnauthorizedException('No tienes permiso para acceder a este perfil.');
+    }
+
+    return perfil;
   }
 
   async update(id_perfil: number, updatePerfilDto: UpdatePerfilUsuarioDto, user: Usuario): Promise<PerfilUsuario> {
-    try {
-      const perfil = await this.findOne(id_perfil, user);
+    const perfil = await this.findOne(id_perfil, user);
 
-      if (updatePerfilDto.id_genero) {
-        const genero = await this.generoRepository.findOne({ where: { id_genero: updatePerfilDto.id_genero } });
-        if (!genero) {
-          throw new NotFoundException(`Género con ID ${updatePerfilDto.id_genero} no encontrado.`);
-        }
-        perfil.genero = genero;
-      }
+    const isOwner = perfil.usuario.id_usuario === user.id_usuario;
+    const isAdmin = user.rol.nombre === 'admin';
 
-      Object.assign(perfil, updatePerfilDto);
-      return await this.perfilRepository.save(perfil);
-    } catch (error) {
-      throw new BadRequestException(`Error al actualizar el perfil: ${error.message}`);
+    if (!isOwner && !(isAdmin && perfil.usuario.rol.nombre === 'usuario')) {
+      throw new UnauthorizedException('No tienes permiso para actualizar este perfil.');
     }
+
+    const { id_genero, ...rest } = updatePerfilDto;
+
+    if (id_genero) {
+      const genero = await this.generoRepository.findOne({ where: { id_genero } });
+      if (!genero) {
+        throw new NotFoundException(`Género con ID ${id_genero} no encontrado.`);
+      }
+      perfil.genero = genero;
+    }
+
+    Object.assign(perfil, rest);
+    return this.perfilRepository.save(perfil);
   }
 
   async remove(id_perfil: number, user: Usuario): Promise<void> {
-    try {
-      const perfil = await this.findOne(id_perfil, user);
-      await this.perfilRepository.remove(perfil);
-    } catch (error) {
-      throw new BadRequestException(`Error al eliminar el perfil: ${error.message}`);
+    const perfil = await this.findOne(id_perfil, user);
+
+    const isOwner = perfil.usuario.id_usuario === user.id_usuario;
+    const isAdmin = user.rol.nombre === 'admin';
+
+    // Un usuario solo puede eliminar su propio perfil.
+    // Un admin puede eliminar cualquier perfil de un usuario normal.
+    if (!isOwner && !(isAdmin && perfil.usuario.rol.nombre === 'usuario')) {
+      throw new UnauthorizedException('No tienes permiso para eliminar este perfil.');
     }
+
+    await this.perfilRepository.remove(perfil);
   }
 }
