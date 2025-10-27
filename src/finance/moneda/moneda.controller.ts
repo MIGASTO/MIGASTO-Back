@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, UsePipes, ValidationPipe, ParseIntPipe } from '@nestjs/common';
 import { MonedaService } from './moneda.service';
 import { CreateMonedaDto } from './dto/create-moneda.dto';
 import { UpdateMonedaDto } from './dto/update-moneda.dto';
@@ -13,6 +13,7 @@ export class MonedaController {
 
   @Post()
   @Roles('admin')
+  @UsePipes(new ValidationPipe({ whitelist: true }))
   create(@Body() createMonedaDto: CreateMonedaDto) {
     return this.monedaService.create(createMonedaDto);
   }
@@ -25,19 +26,20 @@ export class MonedaController {
 
   @Get(':id')
   @Roles('admin', 'usuario')
-  findOne(@Param('id') id: string) {
-    return this.monedaService.findOne(+id);
+  findOne(@Param('id', ParseIntPipe) id: number) {
+    return this.monedaService.findOne(id);
   }
 
   @Patch(':id')
   @Roles('admin')
-  update(@Param('id') id: string, @Body() updateMonedaDto: UpdateMonedaDto) {
-    return this.monedaService.update(+id, updateMonedaDto);
+  @UsePipes(new ValidationPipe({ whitelist: true }))
+  update(@Param('id', ParseIntPipe) id: number, @Body() updateMonedaDto: UpdateMonedaDto) {
+    return this.monedaService.update(id, updateMonedaDto);
   }
 
   @Delete(':id')
   @Roles('admin')
-  remove(@Param('id') id: string) {
-    return this.monedaService.remove(+id);
+  remove(@Param('id', ParseIntPipe) id: number) {
+    return this.monedaService.remove(id);
   }
 }

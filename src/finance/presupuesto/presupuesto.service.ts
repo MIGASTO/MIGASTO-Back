@@ -59,7 +59,6 @@ export class PresupuestoService {
     });
     if (!presupuesto) throw new NotFoundException(`Presupuesto con id ${id} no encontrado`);
 
-    // si viene id_usuario en el update, validar el usuario
     if (updatePresupuestoDto.id_usuario) {
       const usuario = await this.usuarioRepository.findOne({
         where: { id_usuario: updatePresupuestoDto.id_usuario },

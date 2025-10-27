@@ -1,15 +1,17 @@
 import { PartialType } from '@nestjs/mapped-types';
 import { CreateMovimientoDto } from './create-movimiento.dto';
 import { IsOptional, IsNumber, IsDateString, IsString, IsInt, IsArray } from 'class-validator';
+import { Type } from 'class-transformer';
 
 export class UpdateMovimientoDto extends PartialType(CreateMovimientoDto) {
   @IsOptional()
+  @Type(() => Number)
   @IsNumber({}, { message: 'El monto debe ser un número' })
   monto?: number;
 
   @IsOptional()
   @IsDateString({}, { message: 'La fecha debe ser una fecha válida' })
-  fecha?: Date;
+  fecha?: string;
 
   @IsOptional()
   @IsString({ message: 'La descripción debe ser un texto' })

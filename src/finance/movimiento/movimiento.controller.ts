@@ -31,6 +31,7 @@ export class MovimientoController {
     @Body(new ValidationPipe()) createMovimientoDto: CreateMovimientoDto,
     @CurrentUser() user: Usuario,
   ) {
+    createMovimientoDto.id_usuario = user.id_usuario;
     return this.movimientoService.create(createMovimientoDto, user);
   }
 
@@ -38,6 +39,18 @@ export class MovimientoController {
   @Roles('admin', 'usuario')
   findAll(@CurrentUser() user: Usuario) {
     return this.movimientoService.findAll(user);
+  }
+
+  @Get('ingresos')
+  @Roles('admin', 'usuario')
+  findIngresos(@CurrentUser() user: Usuario) {
+    return this.movimientoService.findByCategoriaTipo('ingreso', user);
+  }
+
+  @Get('gastos')
+  @Roles('admin', 'usuario')
+  findGastos(@CurrentUser() user: Usuario) {
+    return this.movimientoService.findByCategoriaTipo('gasto', user);
   }
 
 

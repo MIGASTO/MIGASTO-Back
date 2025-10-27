@@ -8,7 +8,6 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
     const authHeader = request.headers['authorization'];
     // Depuración: mostrar el header de autorización recibido
     //console.log('Header recibido en backend:', authHeader || 'No llegó header');
-    
     return super.canActivate(context);
   }
 }
