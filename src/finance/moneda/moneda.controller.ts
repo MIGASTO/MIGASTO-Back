@@ -17,6 +17,7 @@ export class MonedaController {
   create(@Body() createMonedaDto: CreateMonedaDto) {
     return this.monedaService.create(createMonedaDto);
   }
+ 
 
   @Get()
   @Roles('admin', 'usuario')
@@ -24,11 +25,13 @@ export class MonedaController {
     return this.monedaService.findAll();
   }
 
+
   @Get(':id')
   @Roles('admin', 'usuario')
   findOne(@Param('id', ParseIntPipe) id: number) {
     return this.monedaService.findOne(id);
   }
+
 
   @Patch(':id')
   @Roles('admin')
@@ -37,6 +40,7 @@ export class MonedaController {
     return this.monedaService.update(id, updateMonedaDto);
   }
 
+  
   @Delete(':id')
   @Roles('admin')
   remove(@Param('id', ParseIntPipe) id: number) {

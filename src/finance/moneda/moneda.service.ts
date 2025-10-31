@@ -12,6 +12,7 @@ export class MonedaService {
     private readonly monedaRepository: Repository<Moneda>,
   ) {}
 
+  //metodo crear moneda
   async create(createMonedaDto: CreateMonedaDto): Promise<{ message: string, data: Moneda }> {
     try {
       const moneda = this.monedaRepository.create(createMonedaDto);
@@ -21,7 +22,7 @@ export class MonedaService {
       throw new InternalServerErrorException('Error al crear la moneda');
     }
   }
-
+ //Listar todas las monedas
   async findAll(): Promise<Moneda[]> {
     try {
       const monedas = await this.monedaRepository.find();
@@ -36,7 +37,7 @@ export class MonedaService {
       throw new InternalServerErrorException('Error al obtener las monedas');
     }
   }
-
+  //Buscar moneda por ID
   async findOne(id: number): Promise<Moneda> {
     try {
       const moneda = await this.monedaRepository.findOne({ where: { id_moneda: id } });
@@ -52,6 +53,7 @@ export class MonedaService {
     }
   }
 
+  //Acualizar moneda
   async update(id: number, updateMonedaDto: UpdateMonedaDto): Promise<Moneda> {
     try {
       const moneda = await this.findOne(id);
@@ -65,6 +67,7 @@ export class MonedaService {
     }
   }
 
+  //Remover moneda
   async remove(id: number): Promise<{ message: string }> {
     try {
       const result = await this.monedaRepository.delete(id);     
