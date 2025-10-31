@@ -47,6 +47,20 @@ export class PerfilService {
     return this.perfilRepository.find({ relations: ['usuario', 'genero'] });
   }
 
+  async findByUser(user: Usuario): Promise<PerfilUsuario> {
+  const perfil = await this.perfilRepository.findOne({
+    where: { usuario: { id_usuario: user.id_usuario } },
+    relations: ['usuario', 'genero', 'usuario.rol'],
+  });
+
+  if (!perfil) {
+    throw new NotFoundException('No se encontró un perfil para este usuario.');
+  }
+
+    return perfil;
+  }
+
+
   async findOne(id_perfil: number, user: Usuario): Promise<PerfilUsuario> {
     const perfil = await this.perfilRepository.findOne({
       where: { id_perfil },
@@ -92,6 +106,32 @@ export class PerfilService {
     Object.assign(perfil, rest);
     return this.perfilRepository.save(perfil);
   }
+
+
+  async updateByUser(updatePerfilDto: UpdatePerfilUsuarioDto, user: Usuario): Promise<PerfilUsuario> {
+  const perfil = await this.perfilRepository.findOne({
+    where: { usuario: { id_usuario: user.id_usuario } },
+    relations: ['usuario', 'genero', 'usuario.rol'],
+  });
+
+  if (!perfil) {
+    throw new NotFoundException('No se encontró un perfil para este usuario.');
+  }
+
+  const { id_genero, ...rest } = updatePerfilDto;
+
+  if (id_genero) {
+    const genero = await this.generoRepository.findOne({ where: { id_genero } });
+    if (!genero) {
+      throw new NotFoundException(`Género con ID ${id_genero} no encontrado.`);
+    }
+    perfil.genero = genero;
+  }
+
+  Object.assign(perfil, rest);
+
+  return this.perfilRepository.save(perfil);
+}
 
   async remove(id_perfil: number, user: Usuario): Promise<void> {
     const perfil = await this.findOne(id_perfil, user);

@@ -25,14 +25,28 @@ export class PerfilController {
   findAll() {
     return this.perfilService.findAll();
   }
+  @Get('me')
+  @Roles('admin', 'usuario')
+  findMe(@Req() req) {
+    return this.perfilService.findByUser(req.user);
+  }
 
   @Get(':id')
-  @Roles('admin', 'usuario')
+  @Roles('admin',)
   findOne(
     @Param('id', ParseIntPipe) id: number,
     @Req() req,
   ) {
     return this.perfilService.findOne(id, req.user);
+  }
+
+  @Patch('me')
+  @Roles('admin', 'usuario')
+  updateMyProfile(
+  @Body(new ValidationPipe()) updatePerfilDto: UpdatePerfilUsuarioDto,
+  @Req() req,
+  ) {
+    return this.perfilService.updateByUser(updatePerfilDto, req.user);
   }
 
   @Patch(':id')
