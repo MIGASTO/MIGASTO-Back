@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { In, Repository } from 'typeorm';
+import { Between,In, Repository } from 'typeorm';
 import { Movimiento } from './entity/movimiento.entity';
 import { Usuario } from 'src/user/usuario/entity/usuario.entity';
 import { Categoria } from '../categoria/entity/categoria.entity';
@@ -8,6 +8,8 @@ import { Moneda } from '../moneda/entity/moneda.entity';
 import { Tag } from '../tag/entity/tag.entity';
 import { CreateMovimientoDto } from './dto/create-movimiento.dto';
 import { UpdateMovimientoDto } from './dto/update-movimiento.dto';
+
+
 
 @Injectable()
 export class MovimientoService {
@@ -112,46 +114,48 @@ export class MovimientoService {
 
   
   async findByCategoriaTipo(tipo: string, user: Usuario) {
-  const currentUser = await this.usuarioRepo.findOne({
-    where: { id_usuario: user.id_usuario },
-    relations: ['rol'],
-  });
-
-  if (!currentUser) {
-    throw new NotFoundException(`Usuario actual con ID ${user.id_usuario} no encontrado`);
-  }
-
-  const categoria = await this.categoriaRepo.findOne({
-    where: { tipo_categoria: tipo },
-  });
-
-  if (!categoria) {
-    throw new NotFoundException(`No existe la categoría '${tipo}'`);
-  }
-
-  let movimientos: Movimiento[];
-
-  if (currentUser.rol?.nombre === 'admin') {
-    movimientos = await this.movimientoRepo.find({
-      where: { categoria: { id_categoria: categoria.id_categoria } },
-      relations: ['usuario', 'categoria', 'moneda', 'tags'],
+    const currentUser = await this.usuarioRepo.findOne({
+      where: { id_usuario: user.id_usuario },
+      relations: ['rol'],
     });
-  } else {
-    movimientos = await this.movimientoRepo.find({
-      where: {
-        categoria: { id_categoria: categoria.id_categoria },
-        usuario: { id_usuario: currentUser.id_usuario },
-      },
-      relations: ['categoria', 'moneda', 'tags'],
+  
+    if (!currentUser) {
+      throw new NotFoundException(`Usuario actual con ID ${user.id_usuario} no encontrado`);
+    }
+  
+    const categorias = await this.categoriaRepo.find({
+      where: { tipo_categoria: tipo },
     });
+  
+    if (!categorias || categorias.length === 0) {
+      throw new NotFoundException(`No existen categorías del tipo '${tipo}'`);
+    }
+  
+    const categoriaIds = categorias.map((c) => c.id_categoria);
+  
+    let movimientos: Movimiento[];
+  
+    if (currentUser.rol?.nombre === 'admin') {
+      movimientos = await this.movimientoRepo.find({
+        where: { categoria: { id_categoria: In(categoriaIds) } },
+        relations: ['usuario', 'categoria', 'moneda', 'tags'],
+      });
+    } else {
+      movimientos = await this.movimientoRepo.find({
+        where: {
+          categoria: { id_categoria: In(categoriaIds) },
+          usuario: { id_usuario: currentUser.id_usuario },
+        },
+        relations: ['categoria', 'moneda', 'tags'],
+      });
+    }
+  
+    if (!movimientos || movimientos.length === 0) {
+      throw new NotFoundException(`No hay movimientos registrados en la categoría '${tipo}'`);
+    }
+  
+    return movimientos;
   }
-
-  if (!movimientos || movimientos.length === 0) {
-    throw new NotFoundException(`No hay movimientos registrados en la categoría '${tipo}'`);
-  }
-
-  return movimientos;
-}
 
   async findId(id: number, user: Usuario) {
     const currentUser = await this.usuarioRepo.findOne({
@@ -177,6 +181,16 @@ export class MovimientoService {
       throw new ForbiddenException('No tienes permiso para acceder a este movimiento');
     }
 
+    return movimiento;
+  }
+
+  async findOne(id_movimiento: number) {
+    const movimiento = await this.movimientoRepo.findOne({
+      where: { id_movimiento },
+    });
+    if (!movimiento) {
+      throw new NotFoundException(`Movimiento con ID ${id_movimiento} no encontrado`);
+    }
     return movimiento;
   }
 
@@ -271,4 +285,155 @@ export class MovimientoService {
     await this.movimientoRepo.remove(movimiento);
     return { message: `Movimiento con ID ${id} eliminado correctamente` };
   }
+
+async obtenerBalance(user: Usuario, mes?: number, anio?: number) {
+  const currentUser = await this.usuarioRepo.findOne({
+    where: { id_usuario: user.id_usuario },
+    relations: ['rol'],
+  });
+
+  if (!currentUser) {
+    throw new NotFoundException(`Usuario con ID ${user.id_usuario} no encontrado`);
+  }
+
+  
+  const where: any = {};
+  if (currentUser.rol?.nombre !== 'admin') {
+    where.usuario = { id_usuario: currentUser.id_usuario };
+  }
+
+  
+  if (mes && anio) {
+    const inicioMes = new Date(anio, mes - 1, 1);
+    const finMes = new Date(anio, mes, 0);
+    where.fecha = Between(inicioMes, finMes);
+  } else if (anio) {
+    where.fecha = Between(new Date(anio, 0, 1), new Date(anio, 11, 31));
+  }
+
+  
+  const movimientos = await this.movimientoRepo.find({
+    where,
+    relations: ['categoria'],
+  });
+
+  
+  const mesesNombre = [
+    'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
+    'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'
+  ];
+
+  
+  if (!movimientos || movimientos.length === 0) {
+    if (mes && anio) {
+      throw new NotFoundException(`No existen movimientos registrados en ${mesesNombre[mes - 1]} de ${anio}.`);
+    } else if (anio) {
+      throw new NotFoundException(`No existen movimientos registrados en el año ${anio}.`);
+    } else {
+      throw new NotFoundException('No existen movimientos registrados.');
+    }
+  }
+
+  
+  let totalGastos = 0;
+  let totalIngresos = 0;
+
+  for (const mov of movimientos) {
+    if (mov.categoria?.tipo_categoria === 'gasto') {
+      totalGastos += Number(mov.monto);
+    } else if (mov.categoria?.tipo_categoria === 'ingreso') {
+      totalIngresos += Number(mov.monto);
+    }
+  }
+
+  const balance = totalIngresos - totalGastos;
+
+  
+  const respuesta = {
+    totalGastos,
+    totalIngresos,
+    balance,
+    resumen: balance >= 0 ? 'Saldo positivo' : 'Saldo negativo',
+    filtrosAplicados: {
+      mes: mes ? mesesNombre[mes - 1] : 'Todos',
+      anio: anio ?? 'Todos',
+    },
+    rango: {
+      desde: movimientos[0].fecha,
+      hasta: movimientos[movimientos.length - 1].fecha,
+    },
+  };
+
+  return respuesta;
+}
+
+
+async obtenerHistorialBalance(user: Usuario, anio: number) {
+  const currentUser = await this.usuarioRepo.findOne({
+    where: { id_usuario: user.id_usuario },
+    relations: ['rol'],
+  });
+
+  if (!currentUser) {
+    throw new NotFoundException(`Usuario con ID ${user.id_usuario} no encontrado`);
+  }
+
+  const where: any = {};
+  if (currentUser.rol?.nombre !== 'admin') {
+    where.usuario = { id_usuario: currentUser.id_usuario };
+  }
+
+  
+  where.fecha = Between(new Date(anio, 0, 1), new Date(anio, 11, 31));
+
+  const movimientos = await this.movimientoRepo.find({
+    where,
+    relations: ['categoria'],
+  });
+
+  if (!movimientos || movimientos.length === 0) {
+    throw new NotFoundException(`No hay movimientos registrados en el año ${anio}`);
+  }
+
+  
+  const historialMap = new Map<number, { mes: number; totalIngresos: number; totalGastos: number; balance: number }>();
+
+  for (const mov of movimientos) {
+    const mes = new Date(mov.fecha).getMonth() + 1; // 1–12
+    if (!historialMap.has(mes)) {
+      historialMap.set(mes, { mes, totalIngresos: 0, totalGastos: 0, balance: 0 });
+    }
+
+    const registro = historialMap.get(mes)!; 
+    if (mov.categoria?.tipo_categoria === 'gasto') {
+      registro.totalGastos += Number(mov.monto);
+    } else if (mov.categoria?.tipo_categoria === 'ingreso') {
+      registro.totalIngresos += Number(mov.monto);
+    }
+  }
+
+  
+  for (const reg of historialMap.values()) {
+    reg.balance = reg.totalIngresos - reg.totalGastos;
+  }
+
+  
+  const detalleMensual = Array.from(historialMap.values()).sort((a, b) => a.mes - b.mes);
+
+ 
+  const totalIngresos = detalleMensual.reduce((sum, h) => sum + h.totalIngresos, 0);
+  const totalGastos = detalleMensual.reduce((sum, h) => sum + h.totalGastos, 0);
+  const balanceAnual = totalIngresos - totalGastos;
+
+  return {
+    anio,
+    totalIngresos,
+    totalGastos,
+    balanceAnual,
+    resumen: balanceAnual >= 0 ? 'Saldo positivo' : 'Saldo negativo',
+    detalleMensual,
+  };
+}
+
+
 }

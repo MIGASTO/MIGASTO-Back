@@ -9,6 +9,7 @@ import {
   UseGuards,
   ValidationPipe,
   ParseIntPipe,
+  Query,
 } from '@nestjs/common';
 import { MovimientoService } from './movimiento.service';
 import { CreateMovimientoDto } from './dto/create-movimiento.dto';
@@ -31,7 +32,6 @@ export class MovimientoController {
     @Body(new ValidationPipe()) createMovimientoDto: CreateMovimientoDto,
     @CurrentUser() user: Usuario,
   ) {
-    createMovimientoDto.id_usuario = user.id_usuario;
     return this.movimientoService.create(createMovimientoDto, user);
   }
 
@@ -51,6 +51,25 @@ export class MovimientoController {
   @Roles('admin', 'usuario')
   findGastos(@CurrentUser() user: Usuario) {
     return this.movimientoService.findByCategoriaTipo('gasto', user);
+  }
+
+  @Get('balance')
+  @Roles('admin', 'usuario')
+  obtenerBalance(
+  @CurrentUser() user: Usuario,
+  @Query('mes') mes?: number,
+  @Query('anio') anio?: number,
+  ) {
+  return this.movimientoService.obtenerBalance(user, mes ? Number(mes) : undefined, anio ? Number(anio) : undefined)
+  }
+
+  @Get('balance/historial/:anio')
+  @Roles('admin', 'usuario')
+  obtenerHistorialBalance(
+  @CurrentUser() user: Usuario,
+  @Param('anio', ParseIntPipe) anio: number,
+  ) {
+  return this.movimientoService.obtenerHistorialBalance(user, anio);
   }
 
 
