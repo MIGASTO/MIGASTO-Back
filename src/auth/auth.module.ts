@@ -25,6 +25,6 @@ import { PerfilUsuario } from 'src/user/perfil/entity/perfil_usuario.entity';
     TypeOrmModule.forFeature([Usuario, Rol,PerfilUsuario])
   ],
   controllers: [AuthController],
-  providers: [AuthService, JwtStrategy, JwtService]
+  providers: [AuthService, JwtStrategy]
 })
 export class AuthModule {}
