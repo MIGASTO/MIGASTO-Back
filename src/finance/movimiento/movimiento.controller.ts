@@ -73,6 +73,38 @@ export class MovimientoController {
   }
 
 
+  @Get('estadisticas/ingresos')
+  @Roles('admin', 'usuario')
+  estadisticasIngresos(
+  @CurrentUser() user: Usuario,
+  @Query('mes') mes?: number,
+  @Query('anio') anio?: number
+  ) {
+    return this.movimientoService.obtenerEstadisticas(
+      'ingreso',
+      user,
+      mes ? Number(mes) : undefined,
+      anio ? Number(anio) : undefined
+    );
+  }
+
+  @Get('estadisticas/gastos')
+  @Roles('admin', 'usuario')
+  estadisticasGastos(
+  @CurrentUser() user: Usuario,
+  @Query('mes') mes?: number,
+  @Query('anio') anio?: number
+  ) {
+    return this.movimientoService.obtenerEstadisticas(
+      'gasto',
+      user,
+      mes ? Number(mes) : undefined,
+      anio ? Number(anio) : undefined
+    );
+  }
+
+
+
   @Get(':id')
   @Roles('admin', 'usuario')
   findById(
