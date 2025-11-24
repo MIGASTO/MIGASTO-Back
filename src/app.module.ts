@@ -14,6 +14,7 @@ import { NotificacionModule } from './notification/notificacion/notificacion.mod
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { GeneroModule } from './user/genero/genero.module';
 import { AuthModule } from './auth/auth.module';
+import { MailModule } from './mail/mail.module';
 
 
 
@@ -44,7 +45,7 @@ import { AuthModule } from './auth/auth.module';
       password: configService.get<string>('DB_PASS'),
       database: configService.get<string>('DB_NAME'),
       entities: [__dirname + '/**/*.entity{.ts,.js}'],
-      synchronize: false,
+      synchronize: true,
     
       logging: false,
      
@@ -52,6 +53,7 @@ import { AuthModule } from './auth/auth.module';
     }),
 }),
     RolModule,
+    MailModule,
 ],
   controllers: [AppController],
   providers: [AppService],

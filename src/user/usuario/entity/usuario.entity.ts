@@ -1,4 +1,3 @@
-// usuario.entity.ts
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, OneToOne, JoinColumn, OneToMany } from 'typeorm';
 import { Rol } from '../../rol/entity/rol.entity';
 import { PerfilUsuario } from '../../perfil/entity/perfil_usuario.entity';
@@ -17,9 +16,20 @@ export class Usuario {
   @Column({ length: 255 })
   password: string;
 
+  @Column({ type: 'varchar', nullable: true })
+  passwordResetOTP: string | null;
+
+  @Column({ type: 'timestamp', nullable: true })
+  passwordResetExpires: Date | null;
+
+  @Column({ default: 0 })
+  passwordResetAttempts: number;
+
+
+
   @ManyToOne(() => Rol, rol => rol.users)
-@JoinColumn({name: 'rolId'})
-rol: Rol;
+  @JoinColumn({name: 'rolId'})
+  rol: Rol;
 
   @OneToOne(() => PerfilUsuario, (perfil) => perfil.usuario, { cascade: true })
   perfil: PerfilUsuario;

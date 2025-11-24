@@ -9,11 +9,13 @@ import { PassportModule } from '@nestjs/passport';
 import { Usuario } from 'src/user/usuario/entity/usuario.entity';
 import { Rol } from 'src/user/rol/entity/rol.entity';
 import { PerfilUsuario } from 'src/user/perfil/entity/perfil_usuario.entity';
+import { MailModule } from '../mail/mail.module';
 
 
 @Module({
   imports:[
     PassportModule,
+    MailModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
