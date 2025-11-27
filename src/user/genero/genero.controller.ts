@@ -7,12 +7,11 @@ import { RolesGuard } from 'src/auth/jwt-auth/roles.guard';
 import { Roles } from 'src/auth/decorator/roles.decorator';
 
 @Controller('genero')
-@UseGuards(JwtAuthGuard, RolesGuard)
-
 export class GeneroController {
   constructor(private readonly generoService: GeneroService) {}
 
   @Post()
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('admin')
   create(@Body(new ValidationPipe()) createGeneroDto: CreateGeneroDto) {
     return this.generoService.create(createGeneroDto);
@@ -31,6 +30,7 @@ export class GeneroController {
   }
 
   @Patch(':id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('admin')
   update(
     @Param('id', ParseIntPipe) id: number,
@@ -40,6 +40,7 @@ export class GeneroController {
   }
 
   @Delete(':id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('admin')
   remove(@Param('id', ParseIntPipe) id: number) {
     return this.generoService.remove(id);

@@ -10,6 +10,7 @@ import { Usuario } from 'src/user/usuario/entity/usuario.entity';
 import { Rol } from 'src/user/rol/entity/rol.entity';
 import { PerfilUsuario } from 'src/user/perfil/entity/perfil_usuario.entity';
 import { MailModule } from '../mail/mail.module';
+import { Genero } from 'src/user/genero/entity/genero.entity';
 
 
 @Module({
@@ -24,7 +25,7 @@ import { MailModule } from '../mail/mail.module';
         signOptions: { expiresIn: '30m' },
       }),
     }),
-    TypeOrmModule.forFeature([Usuario, Rol,PerfilUsuario])
+    TypeOrmModule.forFeature([Usuario, Rol,PerfilUsuario, Genero])
   ],
   controllers: [AuthController],
   providers: [AuthService, JwtStrategy]
