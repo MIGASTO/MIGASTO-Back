@@ -9,6 +9,7 @@ import { Usuario } from 'src/user/usuario/entity/usuario.entity';
 import { PerfilUsuario } from 'src/user/perfil/entity/perfil_usuario.entity';
 import { CreateUsuarioDto } from 'src/user/usuario/dto/create-usuario.dto';
 import { MailService } from '../mail/mail.service';
+import { Genero } from 'src/user/genero/entity/genero.entity';
 
 @Injectable()
 export class AuthService {
@@ -20,13 +21,13 @@ export class AuthService {
     private readonly rolRepository: Repository<Rol>,
     @InjectRepository(PerfilUsuario)
     private readonly perfilRepository: Repository<PerfilUsuario>,
+    @InjectRepository(Genero)
+    private readonly generoRepository: Repository<Genero>,
     private readonly configService: ConfigService,
     private readonly mailService: MailService,
   ) {}
 
-  // ============================================
-  // =============  REGISTRO  ===================
-  // ============================================
+
 
   async registerUser(userData: CreateUsuarioDto) {
     const salt = await bcrypt.genSalt(10);
@@ -46,12 +47,15 @@ export class AuthService {
 
     const savedUser = await this.usuarioRepository.save(newUser);
 
-    // crear perfil
+    const genero = await this.generoRepository.findOne({ where: { id_genero: userData.id_genero } });
+    if (!genero) throw new BadRequestException('El género especificado no existe.');
+
     const newProfile = this.perfilRepository.create({
-      nombre_completo: '',
-      edad: '',
-      telefono: '',
-      foto_perfil: '',
+      nombre_completo: userData.nombre_completo || '',
+      edad: userData.edad || '',
+      telefono: userData.telefono || '',
+      foto_perfil: userData.foto_perfil || '',
+      genero: genero,
       usuario: savedUser,
     });
 
@@ -70,9 +74,6 @@ export class AuthService {
     };
   }
 
-  // ============================================
-  // ============= AUTENTICACIÓN ================
-  // ============================================
 
   async validateUser(email: string, plainPassword: string): Promise<any> {
     const user = await this.usuarioRepository.findOne({
@@ -99,23 +100,18 @@ export class AuthService {
     return this.generateToken(user);
   }
 
-  // ============================================
-  // ============= RESET PASSWORD ===============
-  // ============================================
 
-  /** 🔥 Genera un OTP de 6 dígitos */
   private generateOtp(): string {
     return Math.floor(100000 + Math.random() * 900000).toString();
   }
 
-  /** 📩 1. Enviar OTP */
   async requestPasswordReset(email: string) {
     const user = await this.usuarioRepository.findOne({ where: { email } });
 
     if (!user) throw new BadRequestException('No existe un usuario con ese email');
 
     const otp = this.generateOtp();
-    const expires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutos
+    const expires = new Date(Date.now() + 10 * 60 * 1000); 
 
     user.passwordResetOTP = otp;
     user.passwordResetExpires = expires;
@@ -126,7 +122,7 @@ export class AuthService {
     return { message: 'Se ha enviado un código OTP a tu correo.' };
   }
 
-  /** 🔁 2. Reenviar OTP */
+
   async resendPasswordResetOtp(email: string) {
     const user = await this.usuarioRepository.findOne({ where: { email } });
 
@@ -144,7 +140,6 @@ export class AuthService {
     return { message: 'Se ha reenviado el código OTP.' };
   }
 
-  /** 🔓 3. Restablecer contraseña con OTP */
   async resetPassword(otp: string, newPassword: string) {
     const user = await this.usuarioRepository.findOne({
       where: {
