@@ -547,6 +547,4 @@ async obtenerEstadisticas(
     throw new BadRequestException(`Error al obtener estadísticas: ${error.message}`);
   }
 }
-
-
 }
