@@ -25,5 +25,5 @@ descripcion?: string;
 
 
 @IsOptional()
-id_usuario?: number; // solo para admin si desea asignar a otro usuario
+id_usuario?: number;
 }
