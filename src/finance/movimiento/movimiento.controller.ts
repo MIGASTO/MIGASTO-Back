@@ -27,7 +27,7 @@ export class MovimientoController {
 
 
   @Post()
-  @Roles('admin', 'usuario')
+  @Roles('admin', 'usuario') 
   create(
     @Body(new ValidationPipe()) createMovimientoDto: CreateMovimientoDto,
     @CurrentUser() user: Usuario,

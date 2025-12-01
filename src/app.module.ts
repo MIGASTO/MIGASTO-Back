@@ -15,6 +15,8 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { GeneroModule } from './user/genero/genero.module';
 import { AuthModule } from './auth/auth.module';
 import { MailModule } from './mail/mail.module';
+import { PrestamoModule } from './finance/prestamo/prestamos/prestamo.module';
+import { AbonoModule } from './finance/prestamo/abono/abono.module';
 
 
 
@@ -54,6 +56,8 @@ import { MailModule } from './mail/mail.module';
 }),
     RolModule,
     MailModule,
+    PrestamoModule,
+    AbonoModule,
 ],
   controllers: [AppController],
   providers: [AppService],
