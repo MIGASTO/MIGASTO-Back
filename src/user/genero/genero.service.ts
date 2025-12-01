@@ -29,7 +29,6 @@ export class GeneroService {
   async findAll(): Promise<Genero[]> {
     try {
       return await this.generoRepository.find({ 
-        relations: ['perfiles'],
         select: {
           id_genero: true,
           nombre: true}
@@ -43,7 +42,6 @@ export class GeneroService {
     try {
       const genero = await this.generoRepository.findOne({
         where: { id_genero: id },
-        relations: ['perfiles'],
         select: {
           id_genero: true,
           nombre: true}
@@ -75,10 +73,11 @@ export class GeneroService {
     }
   }
 
-  async remove(id: number): Promise<void> {
+  async remove(id: number): Promise<String> {
     try {
       const genero = await this.findOne(id);
       await this.generoRepository.remove(genero);
+      return "Género eliminado correctamente";
     } catch (error) {
       throw new BadRequestException(`Error al eliminar el género: ${error.message}`);
     }
