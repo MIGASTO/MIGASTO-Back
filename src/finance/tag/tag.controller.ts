@@ -5,6 +5,8 @@ import { UpdateTagDto } from './dto/update-tag.dto';
 import { JwtAuthGuard } from 'src/auth/jwt-auth/jwt-auth.guard';
 import { RolesGuard } from 'src/auth/jwt-auth/roles.guard';
 import { Roles } from 'src/auth/decorator/roles.decorator';
+import { CurrentUser } from 'src/auth/decorator/user.decorator';
+import { Usuario } from 'src/user/usuario/entity/usuario.entity';
 
 @Controller('tags')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -12,33 +14,45 @@ export class TagController {
   constructor(private readonly tagService: TagService) {}
 
   @Post()
-  @Roles('admin')
-  create(@Body(new ValidationPipe()) createTagDto: CreateTagDto) {
-    return this.tagService.create(createTagDto);
+  @Roles('admin', 'usuario')
+  create(
+    @Body(new ValidationPipe()) createTagDto: CreateTagDto,
+    @CurrentUser() user: Usuario
+  ) {
+    return this.tagService.create(createTagDto, user);
   }
 
   @Get()
   @Roles('admin', 'usuario')
-  findAll() {
-    return this.tagService.findAll();
+  findAll(@CurrentUser() user: Usuario) {
+    return this.tagService.findAll(user);
   }
 
   @Get(':id')
   @Roles('admin', 'usuario')
-  findOne(@Param('id', ParseIntPipe) id: number) {
-    return this.tagService.findOne(id);
+  findOne(
+    @Param('id', ParseIntPipe) id: number,
+    @CurrentUser() user: Usuario
+  ) {
+    return this.tagService.findOne(id, user);
   }
 
   @Patch(':id')
-  @Roles('admin')
-  update(@Param('id', ParseIntPipe) id: number, @Body(new ValidationPipe()) updateTagDto: UpdateTagDto) {
-    return this.tagService.update(id, updateTagDto);
+  @Roles('admin', 'usuario')
+  update(
+    @Param('id', ParseIntPipe) id: number, 
+    @Body(new ValidationPipe()) updateTagDto: UpdateTagDto,
+    @CurrentUser() user: Usuario
+  ) {
+    return this.tagService.update(id, updateTagDto, user);
   }
 
   @Delete(':id')
-  @Roles('admin')
-  remove(@Param('id', ParseIntPipe) id: number) {
-    return this.tagService.remove(id);
+  @Roles('admin', 'usuario')
+  remove(
+    @Param('id', ParseIntPipe) id: number,
+    @CurrentUser() user: Usuario
+  ) {
+    return this.tagService.remove(id, user);
   }
 }
- 

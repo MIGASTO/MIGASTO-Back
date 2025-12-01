@@ -4,6 +4,7 @@ import { PerfilUsuario } from '../../perfil/entity/perfil_usuario.entity';
 import { Movimiento } from '../../../finance/movimiento/entity/movimiento.entity';
 import { Presupuesto } from '../../../finance/presupuesto/entity/presupuesto.entity';
 import { Notificacion } from '../../../notification/notificacion/entity/notificacion.entity';
+import { Tag } from 'src/finance/tag/entity/tag.entity';
 
 @Entity('usuario')
 export class Usuario {
@@ -42,4 +43,7 @@ export class Usuario {
 
   @OneToMany(() => Notificacion, (notificacion) => notificacion.usuario)
   notificaciones: Notificacion[];
+
+  @OneToMany(() => Tag, (tag) => tag.usuario)
+  tags: Tag[];
 }
