@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Prestamo } from './entity/prestamo.entity';
@@ -18,8 +18,11 @@ export class PrestamoService {
 
 
   async findAll(user: Usuario): Promise<Prestamo[] | string> {
+    const whereCondition = user.rol?.nombre === 'admin'
+      ? {} 
+      : { usuario: { id_usuario: user.id_usuario } };
     const prestamos = await this.prestamoRepo.find({ 
-      where: { usuario: { id_usuario: user.id_usuario } },
+      where: whereCondition,
       loadEagerRelations: false 
     });
 
@@ -30,8 +33,11 @@ export class PrestamoService {
   }
 
   async findOne(id_prestamo: number, user: Usuario): Promise<Prestamo> {
+    const whereCondition = user.rol?.nombre === 'admin'
+      ? { id_prestamo }
+      : { id_prestamo, usuario: { id_usuario: user.id_usuario } };
     const prestamo = await this.prestamoRepo.findOne({ 
-      where: { id_prestamo, usuario: { id_usuario: user.id_usuario } },
+      where: whereCondition,
       relations: ['abonos'],
       loadEagerRelations: false 
     });
@@ -43,11 +49,30 @@ export class PrestamoService {
 
 
 
-  async create(createPrestamoDto: CreatePrestamoDto, user: Usuario): Promise<string> {
-    const usuario = await this.usuarioRepo.findOne({ where: { id_usuario: user.id_usuario } });
-    if (!usuario) throw new NotFoundException('Usuario no encontrado');
+async create(createPrestamoDto: CreatePrestamoDto, user: Usuario): Promise<string> {
+    const isAdmin = user.rol?.nombre === 'admin';
     
-    const newPrestamo = this.prestamoRepo.create({ ...createPrestamoDto, usuario });
+
+    let idUsuarioDestino = user.id_usuario;
+
+ 
+    if (isAdmin && createPrestamoDto.id_usuario) {
+      idUsuarioDestino = createPrestamoDto.id_usuario;
+    }
+
+
+    const usuario = await this.usuarioRepo.findOne({ where: { id_usuario: idUsuarioDestino } });
+    
+    if (!usuario) {
+      throw new NotFoundException(`El usuario con ID ${idUsuarioDestino} no existe.`);
+    }
+    
+    
+    const newPrestamo = this.prestamoRepo.create({
+      ...createPrestamoDto,
+      usuario,
+    });
+
     await this.prestamoRepo.save(newPrestamo);
     
     return "Prestamo agregado exitosamente";
@@ -66,7 +91,11 @@ export class PrestamoService {
   }
 
   async getPrestamoDetails(user: Usuario): Promise<any[]> {
-    const prestamos = await this.prestamoRepo.find({ where: { usuario: { id_usuario: user.id_usuario } } });
+    const whereCondition = user.rol?.nombre === 'admin'
+      ? {} 
+      : { usuario: { id_usuario: user.id_usuario } };
+
+    const prestamos = await this.prestamoRepo.find({ where: whereCondition });
     return prestamos.map(p => ({
       prestamista: p.prestamista,
       monto_total: p.monto_total,

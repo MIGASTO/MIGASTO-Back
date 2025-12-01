@@ -17,8 +17,11 @@ export class AbonoService {
   ) {}
 
   async findAll(user: Usuario): Promise<Abono[] | string> {
+    const whereCondition = user.rol?.nombre === 'admin'
+      ? {}
+      : { prestamo: { usuario: { id_usuario: user.id_usuario } } };
     const abonos = await this.abonoRepo.find({
-      where: { prestamo: { usuario: { id_usuario: user.id_usuario } } },
+      where: whereCondition,
       relations: ['prestamo'],
       order: { fecha_creacion: 'DESC' },
       loadEagerRelations: false 
@@ -37,8 +40,14 @@ export class AbonoService {
       loadEagerRelations: false 
     });
 
-    if (!abono || abono.prestamo.usuario.id_usuario !== user.id_usuario) {
+    if (!abono) {
       throw new NotFoundException('Abono no encontrado');
+    }
+
+    const isAdmin = user.rol?.nombre === 'admin';
+
+    if (!isAdmin && abono.prestamo.usuario.id_usuario !== user.id_usuario) {
+       throw new NotFoundException('Abono no encontrado o sin permisos');
     }
     abono.prestamo.usuario = undefined as any; 
     return abono;
@@ -47,8 +56,11 @@ export class AbonoService {
 
 
   async create(id_prestamo: number, createAbonoDto: CreateAbonoDto, user: Usuario): Promise<String> {
+    const whereCondition = user.rol?.nombre === 'admin'
+        ? { id_prestamo }
+        : { id_prestamo, usuario: { id_usuario: user.id_usuario } };
     const prestamo = await this.prestamoRepo.findOne({ 
-        where: { id_prestamo, usuario: { id_usuario: user.id_usuario } } 
+        where: whereCondition 
     });
 
     if (!prestamo) throw new NotFoundException('Préstamo no encontrado');
@@ -70,7 +82,6 @@ export class AbonoService {
     if (prestamo.monto_pagado >= montoTotal) prestamo.estado = 'pagado';
     
     await this.prestamoRepo.save(prestamo);
-    newAbono;
     return 'Abono agregado exitosamente';
   }
 
