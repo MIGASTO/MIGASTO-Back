@@ -28,7 +28,12 @@ export class GeneroService {
 
   async findAll(): Promise<Genero[]> {
     try {
-      return await this.generoRepository.find({ relations: ['perfiles'] });
+      return await this.generoRepository.find({ 
+        relations: ['perfiles'],
+        select: {
+          id_genero: true,
+          nombre: true}
+      });
     } catch (error) {
       throw new BadRequestException(`Error al buscar los géneros: ${error.message}`);
     }
@@ -39,6 +44,9 @@ export class GeneroService {
       const genero = await this.generoRepository.findOne({
         where: { id_genero: id },
         relations: ['perfiles'],
+        select: {
+          id_genero: true,
+          nombre: true}
       });
       if (!genero) {
         throw new NotFoundException(`Género con ID ${id} no encontrado.`);
