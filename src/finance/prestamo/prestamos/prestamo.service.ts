@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, HttpStatus } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Prestamo } from './entity/prestamo.entity';
@@ -6,102 +6,141 @@ import { CreatePrestamoDto } from './dto/create-prestamo.dto';
 import { UpdatePrestamoDto } from './dto/update-prestamo.dto';
 import { Usuario } from 'src/user/usuario/entity/usuario.entity';
 
-
 @Injectable()
 export class PrestamoService {
   constructor(
     @InjectRepository(Prestamo)
     private readonly prestamoRepo: Repository<Prestamo>,
+
     @InjectRepository(Usuario)
     private readonly usuarioRepo: Repository<Usuario>,
   ) {}
 
+  async findAll(user: Usuario): Promise<any> {
+    const whereCondition =
+      user.rol?.nombre === 'admin'
+        ? {}
+        : { usuario: { id_usuario: user.id_usuario } };
+        
 
-  async findAll(user: Usuario): Promise<Prestamo[] | string> {
-    const whereCondition = user.rol?.nombre === 'admin'
-      ? {} 
-      : { usuario: { id_usuario: user.id_usuario } };
-    const prestamos = await this.prestamoRepo.find({ 
-      where: whereCondition,
-      loadEagerRelations: false 
-    });
+    const prestamos = await this.prestamoRepo.find({ where: whereCondition, loadEagerRelations: false });
 
-    if (!prestamos || prestamos.length === 0) {
-      return "No hay prestamos registrados";
-    }
-    return prestamos;
+    return {
+      message:
+        prestamos.length === 0
+          ? 'No hay préstamos registrados'
+          : 'Préstamos obtenidos correctamente',
+      data: prestamos,
+    };
   }
 
-  async findOne(id_prestamo: number, user: Usuario): Promise<Prestamo> {
-    const whereCondition = user.rol?.nombre === 'admin'
-      ? { id_prestamo }
-      : { id_prestamo, usuario: { id_usuario: user.id_usuario } };
-    const prestamo = await this.prestamoRepo.findOne({ 
+  async findOne(id: number, user: Usuario): Promise<any> {
+    const whereCondition =
+      user.rol?.nombre === 'admin'
+        ? { id_prestamo: id }
+        : { id_prestamo: id, usuario: { id_usuario: user.id_usuario } };
+
+    const prestamo = await this.prestamoRepo.findOne({
       where: whereCondition,
       relations: ['abonos'],
-      loadEagerRelations: false 
+      loadEagerRelations: false
     });
+
     if (!prestamo) {
       throw new NotFoundException('Préstamo no encontrado');
     }
-    return prestamo;
+
+    return {
+      message: 'Préstamo obtenido correctamente',
+      data: prestamo,
+    };
   }
 
-
-
-async create(createPrestamoDto: CreatePrestamoDto, user: Usuario): Promise<string> {
+  async create(
+    createPrestamoDto: CreatePrestamoDto,
+    user: Usuario,
+  ): Promise<any> {
     const isAdmin = user.rol?.nombre === 'admin';
-    
 
     let idUsuarioDestino = user.id_usuario;
-
- 
     if (isAdmin && createPrestamoDto.id_usuario) {
       idUsuarioDestino = createPrestamoDto.id_usuario;
     }
 
+    const usuario = await this.usuarioRepo.findOne({
+      where: { id_usuario: idUsuarioDestino },
+      loadEagerRelations: false
+    });
 
-    const usuario = await this.usuarioRepo.findOne({ where: { id_usuario: idUsuarioDestino } });
-    
     if (!usuario) {
-      throw new NotFoundException(`El usuario con ID ${idUsuarioDestino} no existe.`);
+      throw new NotFoundException(
+        `El usuario con ID ${idUsuarioDestino} no existe.`,
+      );
     }
-    
-    
+
     const newPrestamo = this.prestamoRepo.create({
       ...createPrestamoDto,
       usuario,
     });
 
-    await this.prestamoRepo.save(newPrestamo);
-    
-    return "Prestamo agregado exitosamente";
+    const savedPrestamo = await this.prestamoRepo.save(newPrestamo);
+    //exluir datos del usuario en la respuesta
+    const { usuario: usuarioData, ...prestamoSinUsuario } = savedPrestamo;
+    return {
+      message: 'Préstamo creado correctamente',
+      data: prestamoSinUsuario,
+      statusCode: HttpStatus.CREATED,
+    };
   }
 
-  async update(id_prestamo: number, updatePrestamoDto: UpdatePrestamoDto, user: Usuario): Promise<Prestamo> {
-    const prestamo = await this.findOne(id_prestamo, user);
-    this.prestamoRepo.merge(prestamo, updatePrestamoDto);
-    return this.prestamoRepo.save(prestamo);
+  async update(
+    id: number,
+    updatePrestamoDto: UpdatePrestamoDto,
+    user: Usuario,
+  ): Promise<any> {
+    const prestamo = await this.findOne(id, user);
+
+    this.prestamoRepo.merge(prestamo.data, updatePrestamoDto);
+
+    const updated = await this.prestamoRepo.save(prestamo.data);
+
+    return {
+      message: 'Préstamo actualizado correctamente',
+      data: updated,
+    };
   }
 
-  async remove(id_prestamo: number, user: Usuario): Promise<string> {
-    await this.findOne(id_prestamo, user);
-    await this.prestamoRepo.delete(id_prestamo);
-    return "Préstamo eliminado exitosamente";
+  async remove(id: number, user: Usuario): Promise<any> {
+    const prestamo = await this.findOne(id, user);
+
+    await this.prestamoRepo.delete(id);
+
+    return {
+      message: 'Préstamo eliminado correctamente',
+      deletedId: id,
+      data: prestamo.data,
+    };
   }
 
-  async getPrestamoDetails(user: Usuario): Promise<any[]> {
-    const whereCondition = user.rol?.nombre === 'admin'
-      ? {} 
-      : { usuario: { id_usuario: user.id_usuario } };
+  async getPrestamoDetails(user: Usuario): Promise<any> {
+    const whereCondition =
+      user.rol?.nombre === 'admin'
+        ? {}
+        : { usuario: { id_usuario: user.id_usuario } };
 
-    const prestamos = await this.prestamoRepo.find({ where: whereCondition });
-    return prestamos.map(p => ({
+    const prestamos = await this.prestamoRepo.find({ where: whereCondition, loadEagerRelations: false });
+
+    const details = prestamos.map((p) => ({
       prestamista: p.prestamista,
       monto_total: p.monto_total,
       monto_pagado: p.monto_pagado,
-      monto_restante: (Number(p.monto_total) - Number(p.monto_pagado)),
-      estado: p.estado
+      monto_restante: Number(p.monto_total) - Number(p.monto_pagado),
+      estado: p.estado,
     }));
+
+    return {
+      message: 'Detalles obtenidos correctamente',
+      data: details,
+    };
   }
 }
