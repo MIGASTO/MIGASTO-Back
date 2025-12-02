@@ -20,7 +20,8 @@ export class GeneroService {
         throw new BadRequestException(`El género "${nombre}" ya existe.`);
       }
       const genero = this.generoRepository.create(createGeneroDto);
-      return await this.generoRepository.save(genero);
+      await this.generoRepository.save(genero);
+      return genero;
     } catch (error) {
       throw new BadRequestException(`Error al crear el género: ${error.message}`);
     }
@@ -73,11 +74,11 @@ export class GeneroService {
     }
   }
 
-  async remove(id: number): Promise<String> {
+  async remove(id: number): Promise<{message: string}> {
     try {
       const genero = await this.findOne(id);
       await this.generoRepository.remove(genero);
-      return "Género eliminado correctamente";
+      return {message: "Género eliminado correctamente"}
     } catch (error) {
       throw new BadRequestException(`Error al eliminar el género: ${error.message}`);
     }

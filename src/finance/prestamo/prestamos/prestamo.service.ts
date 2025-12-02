@@ -23,8 +23,12 @@ export class PrestamoService {
         : { usuario: { id_usuario: user.id_usuario } };
         
 
-    const prestamos = await this.prestamoRepo.find({ where: whereCondition, loadEagerRelations: false });
-
+    const prestamos = await this.prestamoRepo.find({ 
+      where: whereCondition,      
+      relations: ['abonos'],
+      loadEagerRelations: false 
+    });
+ 
     return {
       message:
         prestamos.length === 0

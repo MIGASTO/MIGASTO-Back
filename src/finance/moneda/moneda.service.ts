@@ -67,7 +67,7 @@ export class MonedaService {
     }
   }
 
-  //Remover moneda
+
   async remove(id: number): Promise<{ message: string }> {
     try {
       const result = await this.monedaRepository.delete(id);     
