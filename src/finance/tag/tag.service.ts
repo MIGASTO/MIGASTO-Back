@@ -127,7 +127,7 @@ export class TagService {
     };
   }
 
-  async remove(id_tag: number, user: Usuario): Promise<string> {
+  async remove(id_tag: number, user: Usuario): Promise<{ message: string }> {
     const tag = await this.findTagById(id_tag, user);
     const isAdmin = user.rol?.nombre === 'admin';
     const isGlobal = tag.usuario === null;
@@ -141,6 +141,6 @@ export class TagService {
     }
 
     await this.tagRepository.remove(tag);
-    return `Tag eliminado correctamente.`;
+    return { message: "Tag eliminado correctamente" };
   }
 }
