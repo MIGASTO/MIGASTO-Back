@@ -1,4 +1,7 @@
-import { Controller, Post, Get, Param, Body, Delete, Patch, UseGuards, ValidationPipe } from '@nestjs/common';
+import { 
+  Controller, Post, Get, Param, Body, Delete, Patch, 
+  UseGuards, ValidationPipe, HttpCode, HttpStatus 
+} from '@nestjs/common';
 import { PrestamoService } from './prestamo.service';
 import { CreatePrestamoDto } from './dto/create-prestamo.dto';
 import { UpdatePrestamoDto } from './dto/update-prestamo.dto';
@@ -15,6 +18,7 @@ export class PrestamoController {
 
   @Post()
   @Roles('admin', 'usuario')
+  @HttpCode(HttpStatus.CREATED)
   create(
     @Body(new ValidationPipe()) createPrestamoDto: CreatePrestamoDto,
     @CurrentUser() user: Usuario,
@@ -24,25 +28,28 @@ export class PrestamoController {
 
   @Get()
   @Roles('admin', 'usuario')
+  @HttpCode(HttpStatus.OK)
   findAll(@CurrentUser() user: Usuario) {
     return this.prestamoService.findAll(user);
   }
 
   @Get('details')
   @Roles('admin', 'usuario')
+  @HttpCode(HttpStatus.OK)
   getPrestamoDetails(@CurrentUser() user: Usuario) {
     return this.prestamoService.getPrestamoDetails(user);
   }
 
-
   @Get(':id')
   @Roles('admin', 'usuario')
+  @HttpCode(HttpStatus.OK)
   findOne(@Param('id') id: string, @CurrentUser() user: Usuario) {
     return this.prestamoService.findOne(+id, user);
   }
 
   @Patch(':id')
   @Roles('admin', 'usuario')
+  @HttpCode(HttpStatus.OK)
   update(
     @Param('id') id: string,
     @Body(new ValidationPipe()) updatePrestamoDto: UpdatePrestamoDto,
@@ -53,6 +60,7 @@ export class PrestamoController {
 
   @Delete(':id')
   @Roles('admin', 'usuario')
+  @HttpCode(HttpStatus.OK)
   remove(@Param('id') id: string, @CurrentUser() user: Usuario) {
     return this.prestamoService.remove(+id, user);
   }
