@@ -131,6 +131,7 @@ export class PrestamoService {
     const prestamos = await this.prestamoRepo.find({ where: whereCondition, loadEagerRelations: false });
 
     const details = prestamos.map((p) => ({
+      id_prestamo: p.id_prestamo,
       prestamista: p.prestamista,
       monto_total: p.monto_total,
       monto_pagado: p.monto_pagado,
