@@ -41,6 +41,15 @@ export class AbonoController {
   }
 
  
+  @Post(':id/generar-gasto')
+  @Roles('admin', 'usuario')
+  generarGasto(
+    @Param('id') id: string,
+    @CurrentUser() user: Usuario,
+  ) {
+    return this.abonoService.createGastoFromAbono(+id, user);
+  }
+
   @Patch(':id')
   @Roles('admin', 'usuario')
   update(
@@ -59,5 +68,11 @@ export class AbonoController {
     @CurrentUser() user: Usuario
   ) {
     return this.abonoService.remove(+id, user);
+  }
+
+  @Delete(':id/generar-gasto')
+  @Roles('admin', 'usuario')
+  revertirGasto(@Param('id') id: string, @CurrentUser() user: Usuario) {
+    return this.abonoService.revertGastoFromAbono(+id, user);
   }
 }

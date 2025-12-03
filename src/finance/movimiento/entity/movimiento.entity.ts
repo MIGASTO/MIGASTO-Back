@@ -1,8 +1,9 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn, ManyToMany, JoinTable } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn, ManyToMany, JoinTable, OneToOne } from 'typeorm';
 import { Usuario } from '../../../user/usuario/entity/usuario.entity';
 import { Categoria } from '../../categoria/entity/categoria.entity';
 import { Moneda } from '../../moneda/entity/moneda.entity';
 import { Tag } from 'src/finance/tag/entity/tag.entity';
+import { Abono } from 'src/finance/prestamo/abono/entity/abono.entity';
 
 
 
@@ -41,4 +42,8 @@ export class Movimiento {
     inverseJoinColumn: { name: 'id_tag' },
   })
   tags?: Tag[];
+
+  //relacion con abono (uno a uno)
+  @OneToOne(() => Abono, (abono) => abono.movimiento_generado)
+  abono?: Abono;
 }
