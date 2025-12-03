@@ -163,30 +163,35 @@ export class AbonoService {
     };
   }
 
-  async remove(id_abono: number, user: Usuario): Promise<any> {
-    const abonoResp = await this.findOne(id_abono, user);
-    const abono = abonoResp.data;
-
-    const prestamo = await this.prestamoRepo.findOne({
-      where: { id_prestamo: abono.prestamo.id_prestamo },
+async remove(id_abono: number, user: Usuario): Promise<any> {
+    const abono = await this.abonoRepo.findOne({
+      where: { id_abono },
+      relations: ['prestamo', 'prestamo.usuario', 'movimiento_generado'],
     });
 
-    if (!prestamo) throw new NotFoundException('Préstamo asociado no encontrado');
+    if (!abono) throw new NotFoundException('Abono no encontrado');
+    const isAdmin = user.rol?.nombre === 'admin';
+    if (!isAdmin && abono.prestamo.usuario.id_usuario !== user.id_usuario) {
+      throw new NotFoundException('No tienes permisos sobre este abono');
+    }
 
+    const prestamo = abono.prestamo;
     prestamo.monto_pagado = Number(prestamo.monto_pagado) - Number(abono.monto);
-
-    prestamo.estado =
-      prestamo.monto_pagado < Number(prestamo.monto_total)
-        ? 'pendiente'
-        : 'pagado';
-
+    if (Number(prestamo.monto_pagado) < Number(prestamo.monto_total)) {
+      prestamo.estado = 'pendiente';
+    }
+    if (abono.movimiento_generado) {
+        const idMovimiento = abono.movimiento_generado.id_movimiento;
+        abono.movimiento_generado = undefined;
+        await this.abonoRepo.save(abono);
+        await this.movimientoRepo.delete(idMovimiento);
+    }
     await this.prestamoRepo.save(prestamo);
     await this.abonoRepo.remove(abono);
 
     return {
-      message: 'Abono eliminado correctamente',
+      message: 'Abono eliminado correctamente' + (abono.movimiento_generado ? ' (y su gasto asociado también fue borrado).' : '.'),
       deletedId: id_abono,
-      data: abono,
     };
   }
 
