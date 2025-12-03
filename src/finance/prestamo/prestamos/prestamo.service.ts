@@ -5,6 +5,7 @@ import { Prestamo } from './entity/prestamo.entity';
 import { CreatePrestamoDto } from './dto/create-prestamo.dto';
 import { UpdatePrestamoDto } from './dto/update-prestamo.dto';
 import { Usuario } from 'src/user/usuario/entity/usuario.entity';
+import { Movimiento } from 'src/finance/movimiento/entity/movimiento.entity';
 
 @Injectable()
 export class PrestamoService {
@@ -14,6 +15,8 @@ export class PrestamoService {
 
     @InjectRepository(Usuario)
     private readonly usuarioRepo: Repository<Usuario>,
+    @InjectRepository(Movimiento)
+    private readonly movimientoRepo: Repository<Movimiento>,
   ) {}
 
   async findAll(user: Usuario): Promise<any> {

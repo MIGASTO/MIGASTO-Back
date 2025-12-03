@@ -7,9 +7,12 @@ import { Usuario } from 'src/user/usuario/entity/usuario.entity';
 import { Categoria } from '../categoria/entity/categoria.entity';
 import { Moneda } from '../moneda/entity/moneda.entity';
 import { Tag } from '../tag/entity/tag.entity';
+import { Prestamo } from '../prestamo/prestamos/entity/prestamo.entity';
+import { Abono } from '../prestamo/abono/entity/abono.entity';
+
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Movimiento, Usuario, Categoria, Moneda, Tag])],
+  imports: [TypeOrmModule.forFeature([Movimiento, Usuario, Categoria, Moneda, Tag, Prestamo, Abono])],
   controllers: [MovimientoController],
   providers: [MovimientoService]
 })
