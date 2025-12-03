@@ -1,9 +1,7 @@
-import { PartialType } from '@nestjs/mapped-types';
-import { CreateMovimientoDto } from './create-movimiento.dto';
 import { IsOptional, IsNumber, IsDateString, IsString, IsInt, IsArray } from 'class-validator';
 import { Type } from 'class-transformer';
 
-export class UpdateMovimientoDto extends PartialType(CreateMovimientoDto) {
+export class UpdateMovimientoDto  {
   @IsOptional()
   @Type(() => Number)
   @IsNumber({}, { message: 'El monto debe ser un número' })
