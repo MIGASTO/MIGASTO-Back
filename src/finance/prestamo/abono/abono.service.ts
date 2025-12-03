@@ -110,25 +110,30 @@ export class AbonoService {
   }
 
   async update(id_abono: number, updateAbonoDto: UpdateAbonoDto, user: Usuario): Promise<any> {
-    const abonoResp = await this.findOne(id_abono, user);
-    const abono = abonoResp.data;
-
-    const prestamo = await this.prestamoRepo.findOne({
-      where: { id_prestamo: abono.prestamo.id_prestamo },
+    const abono = await this.abonoRepo.findOne({
+      where: { id_abono },
+      relations: ['prestamo', 'prestamo.usuario', 'movimiento_generado'],
     });
 
-    if (!prestamo) throw new NotFoundException('Préstamo asociado no encontrado');
+    if (!abono) throw new NotFoundException('Abono no encontrado');
+    const isAdmin = user.rol?.nombre === 'admin';
+    if (!isAdmin && abono.prestamo.usuario.id_usuario !== user.id_usuario) {
+      throw new NotFoundException('No tienes permisos sobre este abono');
+    }
 
+    const prestamo = abono.prestamo;
     if (updateAbonoDto.monto) {
-      const diff = Number(updateAbonoDto.monto) - Number(abono.monto);
-      const nuevoTotal = Number(prestamo.monto_pagado) + diff;
-
-      if (nuevoTotal > Number(prestamo.monto_total)) {
-        throw new BadRequestException('El monto excede la deuda total.');
+      const montoAnteriorAbono = Number(abono.monto);
+      const montoNuevoAbono = Number(updateAbonoDto.monto);
+      
+      const diff = montoNuevoAbono - montoAnteriorAbono;
+      const nuevoTotalPagado = Number(prestamo.monto_pagado) + diff;
+      if (nuevoTotalPagado > Number(prestamo.monto_total)) {
+        throw new BadRequestException('La actualización del monto excede la deuda total del préstamo.');
       }
-
-      prestamo.monto_pagado = nuevoTotal;
-      abono.monto = updateAbonoDto.monto;
+      prestamo.monto_pagado = nuevoTotalPagado;
+      
+      abono.monto = montoNuevoAbono;
     }
 
     prestamo.estado =
@@ -136,12 +141,25 @@ export class AbonoService {
         ? 'pendiente'
         : 'pagado';
 
+    if (abono.movimiento_generado) {
+        let movimientoModificado = false;
+
+        if (updateAbonoDto.monto) {
+            abono.movimiento_generado.monto = Number(updateAbonoDto.monto);
+            movimientoModificado = true;
+        }
+
+
+        if (movimientoModificado) {
+            await this.movimientoRepo.save(abono.movimiento_generado);
+        }
+    }
     await this.prestamoRepo.save(prestamo);
-    const updated = await this.abonoRepo.save(abono);
+    const updatedAbono = await this.abonoRepo.save(abono);
 
     return {
-      message: 'Abono actualizado correctamente',
-      data: updated,
+      message: 'Abono actualizado correctamente' + (abono.movimiento_generado ? ' y gasto sincronizado.' : '.'),
+      data: updatedAbono,
     };
   }
 
