@@ -1,11 +1,16 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { In, Repository, IsNull } from 'typeorm';
 import { Abono } from './entity/abono.entity';
 import { CreateAbonoDto } from './dto/create-abono.dto';
 import { UpdateAbonoDto } from './dto/update-abono.dto';
 import { Usuario } from 'src/user/usuario/entity/usuario.entity';
 import { Prestamo } from '../prestamos/entity/prestamo.entity';
+import { Tag } from '../../tag/entity/tag.entity';
+import { Categoria } from 'src/finance/categoria/entity/categoria.entity';
+import { Movimiento } from 'src/finance/movimiento/entity/movimiento.entity';
+import { CreateMovimientoDto } from 'src/finance/movimiento/dto/create-movimiento.dto';
+import { Moneda } from 'src/finance/moneda/entity/moneda.entity';
 
 @Injectable()
 export class AbonoService {
@@ -15,6 +20,17 @@ export class AbonoService {
 
     @InjectRepository(Prestamo)
     private readonly prestamoRepo: Repository<Prestamo>,
+
+    @InjectRepository(Tag)
+    private readonly tagRepo: Repository<Tag>,
+
+    @InjectRepository(Categoria)
+    private readonly categoriaRepo: Repository<Categoria>,
+    
+    @InjectRepository(Movimiento)
+    private readonly movimientoRepo: Repository<Movimiento>,
+
+
   ) {}
 
   async findAll(user: Usuario): Promise<any> {
@@ -22,7 +38,6 @@ export class AbonoService {
       user.rol?.nombre === 'admin'
         ? {}
         : { prestamo: { usuario: { id_usuario: user.id_usuario } } };
-
     const abonos = await this.abonoRepo.find({
       where: whereCondition,
       relations: ['prestamo'],
@@ -156,4 +171,92 @@ export class AbonoService {
       data: abono,
     };
   }
+
+async createGastoFromAbono(id_abono: number, user: Usuario): Promise<CreateMovimientoDto> {
+    const abono = await this.abonoRepo.findOne({
+      where: { id_abono },
+      relations: ['prestamo', 'prestamo.usuario', 'movimiento_generado'],
+    });
+
+    if (!abono) throw new NotFoundException('Abono no encontrado');
+
+    if (abono.movimiento_generado) {
+        throw new BadRequestException('Este abono ya tiene un gasto asociado. Debes revertirlo primero si quieres crearlo de nuevo.');
+    }
+
+    const isAdmin = user.rol?.nombre === 'admin';
+    if (!isAdmin && abono.prestamo.usuario.id_usuario !== user.id_usuario) {
+      throw new NotFoundException('No tienes permisos sobre este abono');
+    }
+
+    const categoriaGasto = await this.categoriaRepo.findOne({
+      where: { tipo_categoria: 'gasto' } 
+    });
+
+    if (!categoriaGasto) {
+      throw new BadRequestException('No se encontró la categoría "gasto" en el sistema.');
+    }
+  
+    const tagAbono = await this.tagRepo.findOne({
+      where: [
+        { nombre: 'abono', usuario: IsNull() }, 
+        { nombre: 'abono', usuario: { id_usuario: user.id_usuario } } 
+      ]
+    });
+
+    const descripcion = `Abono del prestamo de '${abono.prestamo.prestamista}'`;
+    const tagsEntidades = tagAbono ? [tagAbono] : [];
+
+    const nuevoMovimiento = this.movimientoRepo.create({
+      monto: Number(abono.monto),
+      fecha: new Date(), 
+      descripcion: descripcion,
+      categoria: categoriaGasto,
+      usuario: user,
+      tags: tagsEntidades,
+    });
+
+    const movimientoGuardado = await this.movimientoRepo.save(nuevoMovimiento);
+    abono.movimiento_generado = movimientoGuardado;
+    await this.abonoRepo.save(abono);
+    const respuestaFrontend: CreateMovimientoDto = {
+      monto: Number(nuevoMovimiento.monto),
+      fecha: new Date().toISOString().split('T')[0], 
+      descripcion: nuevoMovimiento.descripcion,
+      id_categoria: categoriaGasto.id_categoria, 
+      id_usuario: user.id_usuario,
+      tags: tagsEntidades.map(t => t.id_tag),
+    };
+
+    return respuestaFrontend;
+  }
+
+  async revertGastoFromAbono(id_abono: number, user: Usuario): Promise<any> {
+    const abono = await this.abonoRepo.findOne({
+      where: { id_abono },
+      relations: ['prestamo', 'prestamo.usuario', 'movimiento_generado'],
+    });
+
+    if (!abono) throw new NotFoundException('Abono no encontrado');
+
+    const isAdmin = user.rol?.nombre === 'admin';
+    if (!isAdmin && abono.prestamo.usuario.id_usuario !== user.id_usuario) {
+      throw new NotFoundException('No tienes permisos sobre este abono');
+    }
+
+    if (!abono.movimiento_generado) {
+        throw new BadRequestException('Este abono no tiene ningún gasto registrado para eliminar.');
+    }
+
+    const idMovimientoABorrar = abono.movimiento_generado.id_movimiento; 
+    abono.movimiento_generado = undefined;
+    await this.abonoRepo.save(abono);
+    await this.movimientoRepo.delete(idMovimientoABorrar);
+
+    return {
+      message: 'Gasto asociado eliminado correctamente. El abono ahora está libre para registrarse de nuevo.'
+    };
+  }
 }
+
+
