@@ -1,7 +1,15 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, OneToOne, JoinColumn, OneToMany } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  ManyToOne,
+  OneToOne,
+  JoinColumn,
+  OneToMany,
+} from 'typeorm';
 import { Rol } from '../../rol/entity/rol.entity';
 import { PerfilUsuario } from '../../perfil/entity/perfil_usuario.entity';
-import { Movimiento } from '../../../finance/movimiento/entity/movimiento.entity';
+import { Movimiento } from '../../../finance/movimiento/movimiento/entity/movimiento.entity';
 import { Presupuesto } from '../../../finance/presupuesto/entity/presupuesto.entity';
 import { Notificacion } from '../../../notification/notificacion/entity/notificacion.entity';
 import { Tag } from 'src/finance/tag/entity/tag.entity';
@@ -26,10 +34,8 @@ export class Usuario {
   @Column({ default: 0 })
   passwordResetAttempts: number;
 
-
-
-  @ManyToOne(() => Rol, rol => rol.users)
-  @JoinColumn({name: 'rolId'})
+  @ManyToOne(() => Rol, (rol) => rol.users)
+  @JoinColumn({ name: 'rolId' })
   rol: Rol;
 
   @OneToOne(() => PerfilUsuario, (perfil) => perfil.usuario, { cascade: true })

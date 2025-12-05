@@ -1,4 +1,14 @@
-import { IsEmail, IsNotEmpty, IsString, MinLength, IsInt, IsOptional, IsNumberString, IsUrl, Length } from 'class-validator';
+import {
+  IsEmail,
+  IsNotEmpty,
+  IsString,
+  MinLength,
+  IsInt,
+  IsOptional,
+  IsNumberString,
+  IsUrl,
+  Length,
+} from 'class-validator';
 
 export class CreateUsuarioDto {
   @IsEmail()
@@ -24,7 +34,7 @@ export class CreateUsuarioDto {
   @IsUrl()
   foto_perfil?: string;
 
-  @IsOptional()s
+  @IsOptional() s;
   @IsString()
   @Length(7, 20)
   telefono?: string;

@@ -1,6 +1,11 @@
 import { Type } from 'class-transformer';
-import { IsString, IsNotEmpty, Length, IsNumber, IsPositive } from 'class-validator';
-
+import {
+  IsString,
+  IsNotEmpty,
+  Length,
+  IsNumber,
+  IsPositive,
+} from 'class-validator';
 
 export class CreateMonedaDto {
   @IsString({ message: 'El código debe ser una cadena de texto' })

@@ -1,4 +1,9 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import * as bcrypt from 'bcryptjs';
@@ -17,7 +22,9 @@ export class UsuarioService {
   ) {}
 
   async create(createUsuarioDto: CreateUsuarioDto) {
-    const rol = await this.rolRepository.findOne({ where: { id: createUsuarioDto.rolId } });
+    const rol = await this.rolRepository.findOne({
+      where: { id: createUsuarioDto.rolId },
+    });
     if (!rol) throw new BadRequestException('Rol no encontrado');
     const hashedPassword = await bcrypt.hash(createUsuarioDto.password, 10);
 
@@ -33,26 +40,21 @@ export class UsuarioService {
   }
 
   async findAll() {
-    const usuarios = await this.usuarioRepository.find({
+    return this.usuarioRepository.find({
       relations: ['rol', 'perfil'],
       select: {
         id_usuario: true,
         email: true,
-        rol: {
-          id: true,
-          nombre: true
-        },
+        rol: { id: true, nombre: true },
         perfil: {
           nombre_completo: true,
           foto_perfil: true,
           telefono: true,
-          edad: true
-        }
-      }
+          edad: true,
+        },
+      },
     });
-    return usuarios;
   }
-
 
   async findOne(id: number) {
     const usuario = await this.usuarioRepository.findOne({
@@ -62,47 +64,65 @@ export class UsuarioService {
         id_usuario: true,
         email: true,
         rol: { id: true, nombre: true },
-        perfil: { nombre_completo: true, edad: true, foto_perfil: true, telefono: true }
-      }
+        perfil: {
+          nombre_completo: true,
+          edad: true,
+          foto_perfil: true,
+          telefono: true,
+        },
+      },
     });
 
     if (!usuario) throw new NotFoundException('Usuario no encontrado');
     return usuario;
   }
 
-
-  async update(id: number, updateUsuarioDto: UpdateUsuarioDto) {
-    const usuario = await this.usuarioRepository.findOne({ 
-        where: { id_usuario: id },
-        relations: ['rol'] 
+  async update(
+    id: number,
+    updateUsuarioDto: UpdateUsuarioDto,
+    currentUser: Usuario,
+  ) {
+    const usuario = await this.usuarioRepository.findOne({
+      where: { id_usuario: id },
+      relations: ['rol'],
     });
-    
+
     if (!usuario) throw new NotFoundException('Usuario no encontrado');
 
-    // 2. Si viene password, la encriptamos
+    if (usuario.id_usuario === currentUser.id_usuario) {
+      if (updateUsuarioDto.rolId && updateUsuarioDto.rolId !== usuario.rol.id) {
+        throw new ForbiddenException('No puedes cambiar tu propio rol.');
+      }
+    }
+
     if (updateUsuarioDto.password) {
       usuario.password = await bcrypt.hash(updateUsuarioDto.password, 10);
     }
-
 
     if (updateUsuarioDto.email) {
       if (!updateUsuarioDto.email.includes('@')) {
         throw new BadRequestException('Email inválido');
       }
-      if(usuario.email !== updateUsuarioDto.email) {
-        const emailExistente = await this.usuarioRepository.findOne({ where: { email: updateUsuarioDto.email } });
+      if (usuario.email !== updateUsuarioDto.email) {
+        const emailExistente = await this.usuarioRepository.findOne({
+          where: { email: updateUsuarioDto.email },
+        });
         if (emailExistente) {
-          throw new BadRequestException('El email ya está en uso por otro usuario');
+          throw new BadRequestException(
+            'El email ya está en uso por otro usuario',
+          );
         }
-      usuario.email = updateUsuarioDto.email;
+        usuario.email = updateUsuarioDto.email;
+      }
     }
-  }
-
 
     if (updateUsuarioDto.rolId) {
-      const nuevoRol = await this.rolRepository.findOne({ where: { id: updateUsuarioDto.rolId } });
-      if (!nuevoRol) throw new BadRequestException('El Rol especificado no existe');
-      usuario.rol = nuevoRol; 
+      const nuevoRol = await this.rolRepository.findOne({
+        where: { id: updateUsuarioDto.rolId },
+      });
+      if (!nuevoRol)
+        throw new BadRequestException('El Rol especificado no existe');
+      usuario.rol = nuevoRol;
     }
 
     await this.usuarioRepository.save(usuario);
@@ -111,17 +131,27 @@ export class UsuarioService {
       usuario: {
         id: usuario.id_usuario,
         email: usuario.email,
-        rol: usuario.rol.nombre
-      }
+        rol: usuario.rol.nombre,
+      },
     };
   }
 
+  async remove(id: number, currentUser: Usuario) {
+    if (id === currentUser.id_usuario) {
+      throw new ForbiddenException(
+        'No puedes eliminar tu propia cuenta de administrador mientras estás logueado.',
+      );
+    }
 
-  async remove(id: number) {
-    const usuario = await this.usuarioRepository.findOne({ where: { id_usuario: id } });
+    const usuario = await this.usuarioRepository.findOne({
+      where: { id_usuario: id },
+    });
     if (!usuario) throw new NotFoundException('Usuario no encontrado');
-
     await this.usuarioRepository.remove(usuario);
-    return { message: 'Usuario eliminado correctamente' };
+
+    return {
+      message:
+        'Usuario y todos sus datos relacionados eliminados correctamente',
+    };
   }
 }

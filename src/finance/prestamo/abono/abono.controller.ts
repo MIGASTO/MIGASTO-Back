@@ -1,4 +1,14 @@
-import { Controller, Post, Get, Param, Body, Delete, Patch, UseGuards, ValidationPipe } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Get,
+  Param,
+  Body,
+  Delete,
+  Patch,
+  UseGuards,
+  ValidationPipe,
+} from '@nestjs/common';
 import { AbonoService } from './abono.service';
 import { CreateAbonoDto } from './dto/create-abono.dto';
 import { UpdateAbonoDto } from './dto/update-abono.dto';
@@ -13,22 +23,17 @@ import { Usuario } from 'src/user/usuario/entity/usuario.entity';
 export class AbonoController {
   constructor(private readonly abonoService: AbonoService) {}
 
-  @Get() 
+  @Get()
   @Roles('admin', 'usuario')
   findAll(@CurrentUser() user: Usuario) {
     return this.abonoService.findAll(user);
   }
 
-
   @Get(':id')
   @Roles('admin', 'usuario')
-  findOne(
-    @Param('id') id: string, 
-    @CurrentUser() user: Usuario
-  ) {
+  findOne(@Param('id') id: string, @CurrentUser() user: Usuario) {
     return this.abonoService.findOne(+id, user);
   }
-
 
   @Post('prestamo/:prestamoId')
   @Roles('admin', 'usuario')
@@ -40,13 +45,9 @@ export class AbonoController {
     return this.abonoService.create(+prestamoId, createAbonoDto, user);
   }
 
- 
   @Post(':id/generar-gasto')
   @Roles('admin', 'usuario')
-  generarGasto(
-    @Param('id') id: string,
-    @CurrentUser() user: Usuario,
-  ) {
+  generarGasto(@Param('id') id: string, @CurrentUser() user: Usuario) {
     return this.abonoService.createGastoFromAbono(+id, user);
   }
 
@@ -60,13 +61,9 @@ export class AbonoController {
     return this.abonoService.update(+id, updateAbonoDto, user);
   }
 
-
   @Delete(':id')
   @Roles('admin', 'usuario')
-  remove(
-    @Param('id') id: string, 
-    @CurrentUser() user: Usuario
-  ) {
+  remove(@Param('id') id: string, @CurrentUser() user: Usuario) {
     return this.abonoService.remove(+id, user);
   }
 

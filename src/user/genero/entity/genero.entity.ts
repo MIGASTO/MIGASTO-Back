@@ -7,7 +7,7 @@ export class Genero {
   id_genero: number;
 
   @Column({ length: 50, unique: true })
-  nombre: string; 
+  nombre: string;
 
   @OneToMany(() => PerfilUsuario, (perfil) => perfil.genero)
   perfiles: PerfilUsuario[];

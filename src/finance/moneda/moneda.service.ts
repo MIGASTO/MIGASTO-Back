@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException, InternalServerErrorException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Moneda } from './entity/moneda.entity';
@@ -13,7 +17,9 @@ export class MonedaService {
   ) {}
 
   //metodo crear moneda
-  async create(createMonedaDto: CreateMonedaDto): Promise<{ message: string, data: Moneda }> {
+  async create(
+    createMonedaDto: CreateMonedaDto,
+  ): Promise<{ message: string; data: Moneda }> {
     try {
       const moneda = this.monedaRepository.create(createMonedaDto);
       const savedMoneda = await this.monedaRepository.save(moneda);
@@ -22,7 +28,7 @@ export class MonedaService {
       throw new InternalServerErrorException('Error al crear la moneda');
     }
   }
- //Listar todas las monedas
+  //Listar todas las monedas
   async findAll(): Promise<Moneda[]> {
     try {
       const monedas = await this.monedaRepository.find();
@@ -40,7 +46,9 @@ export class MonedaService {
   //Buscar moneda por ID
   async findOne(id: number): Promise<Moneda> {
     try {
-      const moneda = await this.monedaRepository.findOne({ where: { id_moneda: id } });
+      const moneda = await this.monedaRepository.findOne({
+        where: { id_moneda: id },
+      });
       if (!moneda) {
         throw new NotFoundException(`Moneda con ID ${id} no encontrada`);
       }
@@ -67,10 +75,9 @@ export class MonedaService {
     }
   }
 
-
   async remove(id: number): Promise<{ message: string }> {
     try {
-      const result = await this.monedaRepository.delete(id);     
+      const result = await this.monedaRepository.delete(id);
       if (result.affected === 0) {
         throw new NotFoundException(`Moneda con ID ${id} no encontrada`);
       }

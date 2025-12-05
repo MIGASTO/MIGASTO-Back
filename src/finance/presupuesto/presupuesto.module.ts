@@ -6,9 +6,8 @@ import { Presupuesto } from './entity/presupuesto.entity';
 import { Usuario } from 'src/user/usuario/entity/usuario.entity';
 
 @Module({
-
   imports: [TypeOrmModule.forFeature([Presupuesto, Usuario])],
   controllers: [PresupuestoController],
-  providers: [PresupuestoService]
+  providers: [PresupuestoService],
 })
 export class PresupuestoModule {}

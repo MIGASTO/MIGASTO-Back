@@ -1,6 +1,5 @@
 import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
-import { Movimiento } from '../../movimiento/entity/movimiento.entity';
-
+import { Movimiento } from '../../movimiento/movimiento/entity/movimiento.entity';
 
 @Entity('moneda')
 export class Moneda {

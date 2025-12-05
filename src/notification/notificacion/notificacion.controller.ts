@@ -1,4 +1,12 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+} from '@nestjs/common';
 import { NotificacionService } from './notificacion.service';
 import { CreateNotificacionDto } from './dto/create-notificacion.dto';
 import { UpdateNotificacionDto } from './dto/update-notificacion.dto';
@@ -23,7 +31,10 @@ export class NotificacionController {
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateNotificacionDto: UpdateNotificacionDto) {
+  update(
+    @Param('id') id: string,
+    @Body() updateNotificacionDto: UpdateNotificacionDto,
+  ) {
     return this.notificacionService.update(+id, updateNotificacionDto);
   }
 
@@ -32,4 +43,3 @@ export class NotificacionController {
     return this.notificacionService.remove(+id);
   }
 }
- 
