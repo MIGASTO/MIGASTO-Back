@@ -1,6 +1,15 @@
-import { 
-  Controller, Post, Get, Param, Body, Delete, Patch, 
-  UseGuards, ValidationPipe, HttpCode, HttpStatus 
+import {
+  Controller,
+  Post,
+  Get,
+  Param,
+  Body,
+  Delete,
+  Patch,
+  UseGuards,
+  ValidationPipe,
+  HttpCode,
+  HttpStatus,
 } from '@nestjs/common';
 import { PrestamoService } from './prestamo.service';
 import { CreatePrestamoDto } from './dto/create-prestamo.dto';

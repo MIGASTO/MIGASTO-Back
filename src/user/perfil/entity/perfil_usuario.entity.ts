@@ -1,4 +1,11 @@
-import { Entity, PrimaryGeneratedColumn, Column, OneToOne, JoinColumn, ManyToOne,} from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  OneToOne,
+  JoinColumn,
+  ManyToOne,
+} from 'typeorm';
 import { Usuario } from '../../usuario/entity/usuario.entity';
 import { Genero } from 'src/user/genero/entity/genero.entity';
 
@@ -19,7 +26,7 @@ export class PerfilUsuario {
   @Column({ length: 20, nullable: true })
   telefono: string;
 
-  @OneToOne(() => Usuario, (usuario) => usuario.perfil,{ onDelete: 'CASCADE' })
+  @OneToOne(() => Usuario, (usuario) => usuario.perfil, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'id_usuario' })
   usuario: Usuario;
 

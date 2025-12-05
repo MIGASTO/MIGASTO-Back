@@ -1,4 +1,16 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, ParseIntPipe, ValidationPipe, Req } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  UseGuards,
+  ParseIntPipe,
+  ValidationPipe,
+  Req,
+} from '@nestjs/common';
 import { PerfilService } from './perfil.service';
 import { CreatePerfilUsuarioDto } from './dto/create-perfil-usuario.dto';
 import { UpdatePerfilUsuarioDto } from './dto/update-perfil-usuario.dto';
@@ -32,19 +44,16 @@ export class PerfilController {
   }
 
   @Get(':id')
-  @Roles('admin',)
-  findOne(
-    @Param('id', ParseIntPipe) id: number,
-    @Req() req,
-  ) {
+  @Roles('admin')
+  findOne(@Param('id', ParseIntPipe) id: number, @Req() req) {
     return this.perfilService.findOne(id, req.user);
   }
 
   @Patch('me')
   @Roles('admin', 'usuario')
   updateMyProfile(
-  @Body(new ValidationPipe()) updatePerfilDto: UpdatePerfilUsuarioDto,
-  @Req() req,
+    @Body(new ValidationPipe()) updatePerfilDto: UpdatePerfilUsuarioDto,
+    @Req() req,
   ) {
     return this.perfilService.updateByUser(updatePerfilDto, req.user);
   }
@@ -61,10 +70,7 @@ export class PerfilController {
 
   @Delete(':id')
   @Roles('admin', 'usuario')
-  remove(
-    @Param('id', ParseIntPipe) id: number,
-    @Req() req,
-  ) {
+  remove(@Param('id', ParseIntPipe) id: number, @Req() req) {
     return this.perfilService.remove(id, req.user);
   }
 }

@@ -12,22 +12,23 @@ import { PerfilUsuario } from 'src/user/perfil/entity/perfil_usuario.entity';
 import { MailModule } from '../mail/mail.module';
 import { Genero } from 'src/user/genero/entity/genero.entity';
 
-
 @Module({
-  imports:[
+  imports: [
     PassportModule,
     MailModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: async (configService: ConfigService) => ({
-        secret: configService.get<string>('JWT_SECRET') || 'fallback_secret_key_123456789',
+        secret:
+          configService.get<string>('JWT_SECRET') ||
+          'fallback_secret_key_123456789',
         signOptions: { expiresIn: '30m' },
       }),
     }),
-    TypeOrmModule.forFeature([Usuario, Rol,PerfilUsuario, Genero])
+    TypeOrmModule.forFeature([Usuario, Rol, PerfilUsuario, Genero]),
   ],
   controllers: [AuthController],
-  providers: [AuthService, JwtStrategy]
+  providers: [AuthService, JwtStrategy],
 })
 export class AuthModule {}

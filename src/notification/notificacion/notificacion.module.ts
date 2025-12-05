@@ -8,6 +8,6 @@ import { Usuario } from '../../user/usuario/entity/usuario.entity';
 @Module({
   imports: [TypeOrmModule.forFeature([Notificacion, Usuario])],
   controllers: [NotificacionController],
-  providers: [NotificacionService]
+  providers: [NotificacionService],
 })
 export class NotificacionModule {}

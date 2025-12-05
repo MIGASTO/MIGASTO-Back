@@ -6,10 +6,9 @@ import { PerfilUsuario } from './entity/perfil_usuario.entity';
 import { Usuario } from '../usuario/entity/usuario.entity';
 import { Genero } from '../genero/entity/genero.entity';
 
-
 @Module({
   imports: [TypeOrmModule.forFeature([PerfilUsuario, Usuario, Genero])],
   controllers: [PerfilController],
-  providers: [PerfilService]
+  providers: [PerfilService],
 })
 export class PerfilUsuarioModule {}

@@ -1,4 +1,13 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  UseGuards,
+} from '@nestjs/common';
 import { PresupuestoService } from './presupuesto.service';
 import { CreatePresupuestoDto } from './dto/create-presupuesto.dto';
 import { UpdatePresupuestoDto } from './dto/update-presupuesto.dto';
@@ -31,7 +40,10 @@ export class PresupuestoController {
 
   @Patch(':id')
   @Roles('admin', 'usuario')
-  update(@Param('id') id: string, @Body() updatePresupuestoDto: UpdatePresupuestoDto) {
+  update(
+    @Param('id') id: string,
+    @Body() updatePresupuestoDto: UpdatePresupuestoDto,
+  ) {
     return this.presupuestoService.update(+id, updatePresupuestoDto);
   }
 

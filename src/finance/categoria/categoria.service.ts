@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException, InternalServerErrorException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Categoria } from './entity/categoria.entity';
@@ -32,7 +36,9 @@ export class CategoriaService {
 
   async findOne(id: number): Promise<Categoria> {
     try {
-      const categoria = await this.categoriaRepository.findOne({ where: { id_categoria: id } });
+      const categoria = await this.categoriaRepository.findOne({
+        where: { id_categoria: id },
+      });
       if (!categoria) {
         throw new NotFoundException(`Categoría con ID ${id} no encontrada`);
       }
@@ -45,36 +51,39 @@ export class CategoriaService {
     }
   }
 
+  async findWithMovimientosByUser(
+    id: number,
+    user: Usuario,
+  ): Promise<Categoria> {
+    const categoria = await this.categoriaRepository.findOne({
+      where: { id_categoria: id },
+      relations: ['movimientos', 'movimientos.usuario'],
+    });
 
-  async findWithMovimientosByUser(id: number, user: Usuario): Promise<Categoria> {
-  const categoria = await this.categoriaRepository.findOne({
-    where: { id_categoria: id },
-    relations: ['movimientos', 'movimientos.usuario'],
-  });
+    if (!categoria) {
+      throw new NotFoundException(`Categoría con ID ${id} no encontrada`);
+    }
 
-  if (!categoria) {
-    throw new NotFoundException(`Categoría con ID ${id} no encontrada`);
+    // Si el usuario no es admin, filtra sus propios movimientos
+    if (user.rol.nombre !== 'admin') {
+      categoria.movimientos = categoria.movimientos.filter(
+        (m) => m.usuario.id_usuario === user.id_usuario,
+      );
+    }
+
+    if (!categoria.movimientos || categoria.movimientos.length === 0) {
+      throw new NotFoundException(
+        `No existen movimientos asociados a la categoría con ID ${id}`,
+      );
+    }
+
+    return categoria;
   }
 
-  // Si el usuario no es admin, filtra sus propios movimientos
-  if (user.rol.nombre !== 'admin') {
-    categoria.movimientos = categoria.movimientos.filter(
-      (m) => m.usuario.id_usuario === user.id_usuario,
-    );
-  }
-
-  if (!categoria.movimientos || categoria.movimientos.length === 0) {
-    throw new NotFoundException(
-      `No existen movimientos asociados a la categoría con ID ${id}`,
-    );
-  }
-
-  return categoria;
-}
-
-
-
-  async update(id: number, updateCategoriaDto: UpdateCategoriaDto): Promise<Categoria> {
+  async update(
+    id: number,
+    updateCategoriaDto: UpdateCategoriaDto,
+  ): Promise<Categoria> {
     try {
       const categoria = await this.findOne(id);
       this.categoriaRepository.merge(categoria, updateCategoriaDto);
@@ -83,7 +92,9 @@ export class CategoriaService {
       if (error instanceof NotFoundException) {
         throw error;
       }
-      throw new InternalServerErrorException('Error al actualizar la categoría');
+      throw new InternalServerErrorException(
+        'Error al actualizar la categoría',
+      );
     }
   }
 

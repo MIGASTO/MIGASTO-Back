@@ -6,7 +6,6 @@ import { CreatePresupuestoDto } from './dto/create-presupuesto.dto';
 import { UpdatePresupuestoDto } from './dto/update-presupuesto.dto';
 import { Usuario } from '../../user/usuario/entity/usuario.entity';
 
-
 @Injectable()
 export class PresupuestoService {
   constructor(
@@ -22,7 +21,9 @@ export class PresupuestoService {
     });
 
     if (!usuario) {
-      throw new NotFoundException(`Usuario con id ${createPresupuestoDto.id_usuario} no encontrado`);
+      throw new NotFoundException(
+        `Usuario con id ${createPresupuestoDto.id_usuario} no encontrado`,
+      );
     }
 
     const presupuesto = this.presupuestoRepository.create({
@@ -48,7 +49,8 @@ export class PresupuestoService {
       where: { id_presupuesto: id },
       relations: ['usuario'],
     });
-    if (!presupuesto) throw new NotFoundException(`Presupuesto con id ${id} no encontrado`);
+    if (!presupuesto)
+      throw new NotFoundException(`Presupuesto con id ${id} no encontrado`);
     return presupuesto;
   }
 
@@ -57,14 +59,17 @@ export class PresupuestoService {
       where: { id_presupuesto: id },
       relations: ['usuario'],
     });
-    if (!presupuesto) throw new NotFoundException(`Presupuesto con id ${id} no encontrado`);
+    if (!presupuesto)
+      throw new NotFoundException(`Presupuesto con id ${id} no encontrado`);
 
     if (updatePresupuestoDto.id_usuario) {
       const usuario = await this.usuarioRepository.findOne({
         where: { id_usuario: updatePresupuestoDto.id_usuario },
       });
       if (!usuario) {
-        throw new NotFoundException(`Usuario con id ${updatePresupuestoDto.id_usuario} no encontrado`);
+        throw new NotFoundException(
+          `Usuario con id ${updatePresupuestoDto.id_usuario} no encontrado`,
+        );
       }
       presupuesto.usuario = usuario;
     }
@@ -79,7 +84,8 @@ export class PresupuestoService {
     const presupuesto = await this.presupuestoRepository.findOne({
       where: { id_presupuesto: id },
     });
-    if (!presupuesto) throw new NotFoundException(`Presupuesto con id ${id} no encontrado`);
+    if (!presupuesto)
+      throw new NotFoundException(`Presupuesto con id ${id} no encontrado`);
 
     await this.presupuestoRepository.remove(presupuesto);
     return { message: 'Presupuesto eliminado' };

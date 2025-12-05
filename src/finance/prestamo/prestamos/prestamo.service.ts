@@ -5,7 +5,7 @@ import { Prestamo } from './entity/prestamo.entity';
 import { CreatePrestamoDto } from './dto/create-prestamo.dto';
 import { UpdatePrestamoDto } from './dto/update-prestamo.dto';
 import { Usuario } from 'src/user/usuario/entity/usuario.entity';
-import { Movimiento } from 'src/finance/movimiento/entity/movimiento.entity';
+import { Movimiento } from 'src/finance/movimiento/movimiento/entity/movimiento.entity';
 
 @Injectable()
 export class PrestamoService {
@@ -24,14 +24,13 @@ export class PrestamoService {
       user.rol?.nombre === 'admin'
         ? {}
         : { usuario: { id_usuario: user.id_usuario } };
-        
 
-    const prestamos = await this.prestamoRepo.find({ 
-      where: whereCondition,      
+    const prestamos = await this.prestamoRepo.find({
+      where: whereCondition,
       relations: ['abonos'],
-      loadEagerRelations: false 
+      loadEagerRelations: false,
     });
- 
+
     return {
       message:
         prestamos.length === 0
@@ -50,7 +49,7 @@ export class PrestamoService {
     const prestamo = await this.prestamoRepo.findOne({
       where: whereCondition,
       relations: ['abonos'],
-      loadEagerRelations: false
+      loadEagerRelations: false,
     });
 
     if (!prestamo) {
@@ -76,7 +75,7 @@ export class PrestamoService {
 
     const usuario = await this.usuarioRepo.findOne({
       where: { id_usuario: idUsuarioDestino },
-      loadEagerRelations: false
+      loadEagerRelations: false,
     });
 
     if (!usuario) {
@@ -135,7 +134,10 @@ export class PrestamoService {
         ? {}
         : { usuario: { id_usuario: user.id_usuario } };
 
-    const prestamos = await this.prestamoRepo.find({ where: whereCondition, loadEagerRelations: false });
+    const prestamos = await this.prestamoRepo.find({
+      where: whereCondition,
+      loadEagerRelations: false,
+    });
 
     const details = prestamos.map((p) => ({
       id_prestamo: p.id_prestamo,

@@ -6,8 +6,8 @@ import { Genero } from './entity/genero.entity';
 import { PerfilUsuario } from '../perfil/entity/perfil_usuario.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Genero,PerfilUsuario])],
+  imports: [TypeOrmModule.forFeature([Genero, PerfilUsuario])],
   controllers: [GeneroController],
-  providers: [GeneroService]
+  providers: [GeneroService],
 })
 export class GeneroModule {}

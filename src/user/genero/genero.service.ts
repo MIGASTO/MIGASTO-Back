@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Genero } from './entity/genero.entity';
@@ -23,19 +27,24 @@ export class GeneroService {
       await this.generoRepository.save(genero);
       return genero;
     } catch (error) {
-      throw new BadRequestException(`Error al crear el género: ${error.message}`);
+      throw new BadRequestException(
+        `Error al crear el género: ${error.message}`,
+      );
     }
   }
 
   async findAll(): Promise<Genero[]> {
     try {
-      return await this.generoRepository.find({ 
+      return await this.generoRepository.find({
         select: {
           id_genero: true,
-          nombre: true}
+          nombre: true,
+        },
       });
     } catch (error) {
-      throw new BadRequestException(`Error al buscar los géneros: ${error.message}`);
+      throw new BadRequestException(
+        `Error al buscar los géneros: ${error.message}`,
+      );
     }
   }
 
@@ -45,14 +54,17 @@ export class GeneroService {
         where: { id_genero: id },
         select: {
           id_genero: true,
-          nombre: true}
+          nombre: true,
+        },
       });
       if (!genero) {
         throw new NotFoundException(`Género con ID ${id} no encontrado.`);
       }
       return genero;
     } catch (error) {
-      throw new BadRequestException(`Error al buscar el género: ${error.message}`);
+      throw new BadRequestException(
+        `Error al buscar el género: ${error.message}`,
+      );
     }
   }
 
@@ -64,23 +76,29 @@ export class GeneroService {
           where: { nombre: updateGeneroDto.nombre },
         });
         if (exists) {
-          throw new BadRequestException(`El género "${updateGeneroDto.nombre}" ya existe.`);
+          throw new BadRequestException(
+            `El género "${updateGeneroDto.nombre}" ya existe.`,
+          );
         }
       }
       Object.assign(genero, updateGeneroDto);
       return await this.generoRepository.save(genero);
     } catch (error) {
-      throw new BadRequestException(`Error al actualizar el género: ${error.message}`);
+      throw new BadRequestException(
+        `Error al actualizar el género: ${error.message}`,
+      );
     }
   }
 
-  async remove(id: number): Promise<{message: string}> {
+  async remove(id: number): Promise<{ message: string }> {
     try {
       const genero = await this.findOne(id);
       await this.generoRepository.remove(genero);
-      return {message: "Género eliminado correctamente"}
+      return { message: 'Género eliminado correctamente' };
     } catch (error) {
-      throw new BadRequestException(`Error al eliminar el género: ${error.message}`);
+      throw new BadRequestException(
+        `Error al eliminar el género: ${error.message}`,
+      );
     }
   }
 }

@@ -1,13 +1,26 @@
-import { IsString, IsInt, IsUrl, IsOptional, Length, IsNotEmpty, IsNumberString } from 'class-validator';
+import {
+  IsString,
+  IsInt,
+  IsUrl,
+  IsOptional,
+  Length,
+  IsNotEmpty,
+  IsNumberString,
+} from 'class-validator';
 
 export class CreatePerfilUsuarioDto {
   @IsNotEmpty({ message: 'El nombre completo es obligatorio' })
   @IsString({ message: 'El nombre completo debe ser un texto' })
-  @Length(3, 150, { message: 'El nombre completo debe tener entre 3 y 150 caracteres' })
+  @Length(3, 150, {
+    message: 'El nombre completo debe tener entre 3 y 150 caracteres',
+  })
   nombre_completo: string;
 
   @IsOptional()
-  @IsNumberString({}, { message: 'La edad debe ser un número en formato de texto' })
+  @IsNumberString(
+    {},
+    { message: 'La edad debe ser un número en formato de texto' },
+  )
   edad?: string;
 
   @IsOptional()
