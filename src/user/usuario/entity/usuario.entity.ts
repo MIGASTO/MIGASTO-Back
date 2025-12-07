@@ -13,6 +13,7 @@ import { Movimiento } from '../../../finance/movimiento/movimiento/entity/movimi
 import { Presupuesto } from '../../../finance/presupuesto/entity/presupuesto.entity';
 import { Notificacion } from '../../../notification/notificacion/entity/notificacion.entity';
 import { Tag } from 'src/finance/tag/entity/tag.entity';
+import { Prestamo } from 'src/finance/prestamo/prestamos/entity/prestamo.entity';
 
 @Entity('usuario')
 export class Usuario {
@@ -52,4 +53,6 @@ export class Usuario {
 
   @OneToMany(() => Tag, (tag) => tag.usuario)
   tags: Tag[];
+  @OneToMany(() => Prestamo, (prestamo) => prestamo.usuario)
+  prestamos: Prestamo[];
 }
