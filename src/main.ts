@@ -17,13 +17,17 @@ async function bootstrap() {
   app.setGlobalPrefix('api');
 
   app.enableCors({
-    origin: 'http://localhost:4200',
-    Credential: true,
+    origin: process.env.CORS_ORIGIN || 'http://localhost:4200',
+    credentials: true,
   });
 
-  const port = process.env.SERVER_PORT || 3000;
-  await app.listen(port);
+  if (!process.env.VERCEL) {
+    const port = process.env.SERVER_PORT || 3000;
+    await app.listen(port, '0.0.0.0');
+    console.log(`🚀 Server running on http://localhost:${port}/api`);
+  }
 
-  console.log(`🚀 Server running on http://localhost:${port}/api`);
+  return app;
 }
+
 bootstrap();
